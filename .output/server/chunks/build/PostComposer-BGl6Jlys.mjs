@@ -1,0 +1,60 @@
+import { defineComponent, ref, mergeProps, unref, useSSRContext } from 'vue';
+import { ssrRenderAttrs, ssrRenderAttr, ssrInterpolate, ssrIncludeBooleanAttr } from 'vue/server-renderer';
+import { u as useAuthStore } from './auth-Dh-LrX0c.mjs';
+import { u as useFeed } from './FeedPost-BcCFKv8U.mjs';
+import { b as useToast } from './server.mjs';
+
+const _sfc_main = /* @__PURE__ */ defineComponent({
+  __name: "PostComposer",
+  __ssrInlineRender: true,
+  props: {
+    scope: {},
+    batchYear: {}
+  },
+  emits: ["posted"],
+  setup(__props, { emit: __emit }) {
+    useFeed();
+    const authStore = useAuthStore();
+    useToast();
+    const content = ref("");
+    const loading = ref(false);
+    const expanded = ref(false);
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "bg-white border border-slate-200 rounded-xl p-4" }, _attrs))}><div class="flex gap-3"><div class="shrink-0">`);
+      if (unref(authStore).profile?.avatar_url) {
+        _push(`<img${ssrRenderAttr("src", unref(authStore).profile.avatar_url)} class="w-9 h-9 rounded-full object-cover" alt="Your avatar">`);
+      } else {
+        _push(`<div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-medium text-sm">${ssrInterpolate(unref(authStore).displayName.charAt(0).toUpperCase())}</div>`);
+      }
+      _push(`</div><div class="flex-1"><textarea${ssrRenderAttr("rows", unref(expanded) ? 4 : 2)} placeholder="Share something with your alumni network..." class="w-full resize-none border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-200 transition-all">${ssrInterpolate(unref(content))}</textarea>`);
+      if (unref(expanded)) {
+        _push(`<div class="flex items-center justify-between mt-2"><div class="flex gap-2">`);
+        if (__props.scope === "batch" && __props.batchYear) {
+          _push(`<span class="text-xs text-primary-600 bg-primary-50 px-2 py-1 rounded-full"> Batch ${ssrInterpolate(__props.batchYear)} feed </span>`);
+        } else {
+          _push(`<span class="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-full"> General feed </span>`);
+        }
+        _push(`</div><div class="flex gap-2"><button class="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"> Cancel </button><button class="px-4 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50"${ssrIncludeBooleanAttr(!unref(content).trim() || unref(loading)) ? " disabled" : ""}>`);
+        if (unref(loading)) {
+          _push(`<i class="pi pi-spin pi-spinner mr-1"></i>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(` Post </button></div></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div></div></div>`);
+    };
+  }
+});
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/feed/PostComposer.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const PostComposer = Object.assign(_sfc_main, { __name: "FeedPostComposer" });
+
+export { PostComposer as P };
+//# sourceMappingURL=PostComposer-BGl6Jlys.mjs.map

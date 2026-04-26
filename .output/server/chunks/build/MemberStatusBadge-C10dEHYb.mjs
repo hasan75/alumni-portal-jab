@@ -1,0 +1,33 @@
+import { defineComponent, mergeProps, useSSRContext } from 'vue';
+import { ssrRenderAttrs, ssrInterpolate } from 'vue/server-renderer';
+
+const _sfc_main = /* @__PURE__ */ defineComponent({
+  __name: "MemberStatusBadge",
+  __ssrInlineRender: true,
+  props: {
+    status: {}
+  },
+  setup(__props) {
+    const statusConfig = {
+      pending: { label: "Pending", class: "bg-yellow-100 text-yellow-800" },
+      active: { label: "Active", class: "bg-green-100 text-green-800" },
+      suspended: { label: "Suspended", class: "bg-orange-100 text-orange-800" },
+      rejected: { label: "Rejected", class: "bg-red-100 text-red-800" }
+    };
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(`<span${ssrRenderAttrs(mergeProps({
+        class: ["inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium", statusConfig[__props.status]?.class || "bg-slate-100 text-slate-700"]
+      }, _attrs))}>${ssrInterpolate(statusConfig[__props.status]?.label || __props.status)}</span>`);
+    };
+  }
+});
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/admin/members/MemberStatusBadge.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const MemberStatusBadge = Object.assign(_sfc_main, { __name: "AdminMembersMemberStatusBadge" });
+
+export { MemberStatusBadge as M };
+//# sourceMappingURL=MemberStatusBadge-C10dEHYb.mjs.map

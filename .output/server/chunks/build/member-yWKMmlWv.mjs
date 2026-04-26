@@ -1,0 +1,257 @@
+import { _ as __nuxt_component_0 } from './nuxt-link-CnvsOL_4.mjs';
+import { defineComponent, ref, mergeProps, withCtx, unref, createVNode, toDisplayString, openBlock, createBlock, createTextVNode, useSSRContext } from 'vue';
+import { ssrRenderAttrs, ssrRenderComponent, ssrInterpolate, ssrRenderList, ssrRenderClass, ssrRenderAttr, ssrRenderSlot } from 'vue/server-renderer';
+import { u as useAuthStore } from './auth-Dh-LrX0c.mjs';
+import { u as useSupabaseClient } from './useSupabaseClient-CkLFOMIR.mjs';
+import { a as useRoute } from './server.mjs';
+import { u as useSiteConfig } from './useSiteConfig-2EOf2j81.mjs';
+import '../nitro/nitro.mjs';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'node:fs';
+import 'node:path';
+import 'node:crypto';
+import '@primevue/core/base/style';
+import '@primevue/core/basecomponent/style';
+import '@primeuix/styles/autocomplete';
+import '@primeuix/utils/object';
+import '@primeuix/styles/cascadeselect';
+import '@primeuix/styles/checkbox';
+import '@primeuix/styles/checkboxgroup';
+import '@primeuix/styles/colorpicker';
+import '@primeuix/styles/datepicker';
+import '@primeuix/styles/floatlabel';
+import '@primeuix/styles/iconfield';
+import '@primeuix/styles/iftalabel';
+import '@primeuix/styles/inputchips';
+import '@primeuix/styles/inputgroup';
+import '@primeuix/styles/inputnumber';
+import '@primeuix/styles/inputotp';
+import '@primeuix/styles/inputtext';
+import '@primeuix/styles/knob';
+import '@primeuix/styles/listbox';
+import '@primeuix/styles/multiselect';
+import '@primeuix/styles/password';
+import '@primeuix/styles/radiobutton';
+import '@primeuix/styles/radiobuttongroup';
+import '@primeuix/styles/rating';
+import '@primeuix/styles/select';
+import '@primeuix/styles/selectbutton';
+import '@primeuix/styles/slider';
+import '@primeuix/styles/textarea';
+import '@primeuix/styles/togglebutton';
+import '@primeuix/styles/toggleswitch';
+import '@primeuix/styles/treeselect';
+import '@primeuix/styles/button';
+import '@primeuix/styles/buttongroup';
+import '@primeuix/styles/speeddial';
+import '@primeuix/styles/splitbutton';
+import '@primeuix/styles/datatable';
+import '@primeuix/styles/dataview';
+import '@primeuix/styles/orderlist';
+import '@primeuix/styles/organizationchart';
+import '@primeuix/styles/paginator';
+import '@primeuix/styles/picklist';
+import '@primeuix/styles/tree';
+import '@primeuix/styles/treetable';
+import '@primeuix/styles/timeline';
+import '@primeuix/styles/virtualscroller';
+import '@primeuix/styles/accordion';
+import '@primeuix/styles/card';
+import '@primeuix/styles/divider';
+import '@primeuix/styles/fieldset';
+import '@primeuix/styles/panel';
+import '@primeuix/styles/scrollpanel';
+import '@primeuix/styles/splitter';
+import '@primeuix/styles/stepper';
+import '@primeuix/styles/tabview';
+import '@primeuix/styles/tabs';
+import '@primeuix/styles/toolbar';
+import '@primeuix/styles/confirmdialog';
+import '@primeuix/styles/confirmpopup';
+import '@primeuix/styles/dialog';
+import '@primeuix/styles/drawer';
+import '@primeuix/styles/popover';
+import '@primeuix/styles/fileupload';
+import '@primeuix/styles/breadcrumb';
+import '@primeuix/styles/contextmenu';
+import '@primeuix/styles/dock';
+import '@primeuix/styles/menu';
+import '@primeuix/styles/menubar';
+import '@primeuix/styles/megamenu';
+import '@primeuix/styles/panelmenu';
+import '@primeuix/styles/steps';
+import '@primeuix/styles/tabmenu';
+import '@primeuix/styles/tieredmenu';
+import '@primeuix/styles/message';
+import '@primeuix/styles/inlinemessage';
+import '@primeuix/styles/toast';
+import '@primeuix/styles/carousel';
+import '@primeuix/styles/galleria';
+import '@primeuix/styles/image';
+import '@primeuix/styles/imagecompare';
+import '@primeuix/styles/avatar';
+import '@primeuix/styles/badge';
+import '@primeuix/styles/blockui';
+import '@primeuix/styles/chip';
+import '@primeuix/styles/inplace';
+import '@primeuix/styles/metergroup';
+import '@primeuix/styles/overlaybadge';
+import '@primeuix/styles/scrolltop';
+import '@primeuix/styles/skeleton';
+import '@primeuix/styles/progressbar';
+import '@primeuix/styles/progressspinner';
+import '@primeuix/styles/tag';
+import '@primeuix/styles/terminal';
+import '@primevue/forms/form/style';
+import '@primevue/forms/formfield/style';
+import '@primeuix/styles/tooltip';
+import '@primeuix/styles/ripple';
+import '@primeuix/styled';
+import 'node:url';
+import '@iconify/utils';
+import 'consola';
+import 'ipx';
+import 'pinia';
+import 'vue-router';
+
+const _sfc_main = /* @__PURE__ */ defineComponent({
+  __name: "member",
+  __ssrInlineRender: true,
+  setup(__props) {
+    const authStore = useAuthStore();
+    useSupabaseClient();
+    const route = useRoute();
+    const { appName } = useSiteConfig();
+    const mobileMenuOpen = ref(false);
+    const navItems = [
+      { label: "Feed", icon: "pi pi-home", to: "/feed" },
+      { label: "Directory", icon: "pi pi-users", to: "/directory" },
+      { label: "Events", icon: "pi pi-calendar", to: "/events" },
+      { label: "News", icon: "pi pi-megaphone", to: "/news" },
+      { label: "Jobs", icon: "pi pi-briefcase", to: "/jobs" }
+    ];
+    function isActive(path) {
+      return route.path === path || route.path.startsWith(`${path}/`);
+    }
+    return (_ctx, _push, _parent, _attrs) => {
+      const _component_NuxtLink = __nuxt_component_0;
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen bg-slate-50" }, _attrs))}><header class="bg-white border-b border-slate-200 sticky top-0 z-30"><div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">`);
+      _push(ssrRenderComponent(_component_NuxtLink, {
+        to: "/feed",
+        class: "flex items-center gap-2 shrink-0"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            _push2(`<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm"${_scopeId}> A </div><span class="font-semibold text-slate-900 hidden sm:inline"${_scopeId}>${ssrInterpolate(unref(appName))}</span>`);
+          } else {
+            return [
+              createVNode("div", { class: "flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm" }, " A "),
+              createVNode("span", { class: "font-semibold text-slate-900 hidden sm:inline" }, toDisplayString(unref(appName)), 1)
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(`<nav class="hidden md:flex items-center gap-1"><!--[-->`);
+      ssrRenderList(navItems, (item) => {
+        _push(ssrRenderComponent(_component_NuxtLink, {
+          key: item.to,
+          to: item.to,
+          class: ["flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors", [
+            isActive(item.to) ? "bg-primary-50 text-primary-700" : "text-slate-600 hover:bg-slate-50"
+          ]]
+        }, {
+          default: withCtx((_, _push2, _parent2, _scopeId) => {
+            if (_push2) {
+              _push2(`<i class="${ssrRenderClass([item.icon, "text-sm"])}"${_scopeId}></i><span${_scopeId}>${ssrInterpolate(item.label)}</span>`);
+            } else {
+              return [
+                createVNode("i", {
+                  class: [item.icon, "text-sm"]
+                }, null, 2),
+                createVNode("span", null, toDisplayString(item.label), 1)
+              ];
+            }
+          }),
+          _: 2
+        }, _parent));
+      });
+      _push(`<!--]--></nav><div class="flex items-center gap-2">`);
+      _push(ssrRenderComponent(_component_NuxtLink, {
+        to: "/profile",
+        class: "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+      }, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          if (_push2) {
+            if (unref(authStore).profile?.avatar_url) {
+              _push2(`<img${ssrRenderAttr("src", unref(authStore).profile.avatar_url)} class="w-7 h-7 rounded-full object-cover" alt="Avatar"${_scopeId}>`);
+            } else {
+              _push2(`<div class="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-medium text-xs"${_scopeId}>${ssrInterpolate(unref(authStore).displayName.charAt(0).toUpperCase())}</div>`);
+            }
+            _push2(`<span class="hidden sm:inline"${_scopeId}>${ssrInterpolate(unref(authStore).displayName)}</span>`);
+          } else {
+            return [
+              unref(authStore).profile?.avatar_url ? (openBlock(), createBlock("img", {
+                key: 0,
+                src: unref(authStore).profile.avatar_url,
+                class: "w-7 h-7 rounded-full object-cover",
+                alt: "Avatar"
+              }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
+                key: 1,
+                class: "flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-medium text-xs"
+              }, toDisplayString(unref(authStore).displayName.charAt(0).toUpperCase()), 1)),
+              createVNode("span", { class: "hidden sm:inline" }, toDisplayString(unref(authStore).displayName), 1)
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+      _push(`<button class="hidden md:flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 transition-colors"><i class="pi pi-sign-out"></i></button><button class="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-50"><i class="pi pi-bars"></i></button></div></div>`);
+      if (unref(mobileMenuOpen)) {
+        _push(`<div class="md:hidden border-t border-slate-100 bg-white py-2"><!--[-->`);
+        ssrRenderList(navItems, (item) => {
+          _push(ssrRenderComponent(_component_NuxtLink, {
+            key: item.to,
+            to: item.to,
+            class: ["flex items-center gap-3 px-4 py-2.5 text-sm", [
+              isActive(item.to) ? "text-primary-700 font-medium" : "text-slate-700"
+            ]],
+            onClick: ($event) => mobileMenuOpen.value = false
+          }, {
+            default: withCtx((_, _push2, _parent2, _scopeId) => {
+              if (_push2) {
+                _push2(`<i class="${ssrRenderClass(item.icon)}"${_scopeId}></i> ${ssrInterpolate(item.label)}`);
+              } else {
+                return [
+                  createVNode("i", {
+                    class: item.icon
+                  }, null, 2),
+                  createTextVNode(" " + toDisplayString(item.label), 1)
+                ];
+              }
+            }),
+            _: 2
+          }, _parent));
+        });
+        _push(`<!--]--><hr class="my-2 border-slate-100"><button class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 w-full text-left"><i class="pi pi-sign-out"></i> Sign Out </button></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</header><main class="max-w-7xl mx-auto px-4 py-6">`);
+      ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
+      _push(`</main></div>`);
+    };
+  }
+});
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("layouts/member.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+
+export { _sfc_main as default };
+//# sourceMappingURL=member-yWKMmlWv.mjs.map

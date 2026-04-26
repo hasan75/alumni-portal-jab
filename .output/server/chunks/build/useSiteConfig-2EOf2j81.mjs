@@ -1,0 +1,51 @@
+import { u as useSupabaseClient } from './useSupabaseClient-CkLFOMIR.mjs';
+import { ref, computed } from 'vue';
+
+function useSiteConfig() {
+  const supabase = useSupabaseClient();
+  const config = ref({});
+  const loading = ref(false);
+  const appName = computed(() => config.value.app_name || "Alumni Portal");
+  const institutionName = computed(() => config.value.institution_name || "Your Institution");
+  const primaryColor = computed(() => config.value.primary_color || "#2563EB");
+  const logoUrl = computed(() => config.value.logo_url || "");
+  const tagline = computed(() => config.value.tagline || "Connecting alumni across generations");
+  async function fetchConfig() {
+    loading.value = true;
+    const { data, error } = await supabase.from("app_config").select("key, value");
+    if (!error && data) {
+      config.value = Object.fromEntries(data.map((row) => [row.key, row.value || ""]));
+    }
+    loading.value = false;
+  }
+  async function updateConfig(key, value) {
+    const { error } = await supabase.from("app_config").upsert({ key, value });
+    if (!error) {
+      config.value[key] = value;
+    }
+    return { success: !error, error: error?.message };
+  }
+  async function updateMultiple(updates) {
+    const rows = Object.entries(updates).map(([key, value]) => ({ key, value }));
+    const { error } = await supabase.from("app_config").upsert(rows);
+    if (!error) {
+      Object.assign(config.value, updates);
+    }
+    return { success: !error, error: error?.message };
+  }
+  return {
+    config,
+    loading,
+    appName,
+    institutionName,
+    primaryColor,
+    logoUrl,
+    tagline,
+    fetchConfig,
+    updateConfig,
+    updateMultiple
+  };
+}
+
+export { useSiteConfig as u };
+//# sourceMappingURL=useSiteConfig-2EOf2j81.mjs.map

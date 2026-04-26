@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+/* Alumni Portal Theme Colors */
+@theme {
+  /* Primary - Blue */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #2563EB;
+  --color-primary-600: #1d4ed8;
+  --color-primary-700: #1e40af;
+  --color-primary-800: #1e3a8a;
+  --color-primary-900: #1e3366;
+
+  /* Neutrals */
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E5E7EB;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+
+  /* Brand gradient stops */
+  --color-brand-darkest: #060b27;   /* near-black midnight — gradient start */
+  --color-brand-abyss:   #020510;   /* deepest dark — directory hero only */
+  --color-brand-deep:    #0e1d7a;   /* deep sapphire — gradient mid-stop */
+
+  /* Decorative orb blob colors */
+  --color-orb-primary: #60a5fa;
+  --color-orb-light:   #93c5fd;
+  --color-orb-amber:   #fbbf24;
+
+  /* ── Apple HIG System Colors (light mode) ──────────────── */
+  --color-system-blue:   #007AFF;
+  --color-system-green:  #34C759;
+  --color-system-red:    #FF3B30;
+  --color-system-orange: #FF9500;
+  --color-system-yellow: #FFCC00;
+  --color-system-teal:   #5AC8FA;
+  --color-system-indigo: #5856D6;
+  --color-system-purple: #AF52DE;
+  --color-system-pink:   #FF2D55;
+  --color-system-mint:   #00C7BE;
+  --color-system-cyan:   #32ADE6;
+  --color-system-brown:  #A2845E;
+}
+
+/* Global Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Segoe UI', sans-serif;
+  color: var(--color-slate-800);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.6);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Liquid Glass utilities ─────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-bottom-color: rgba(255,255,255,0.15);
+  border-right-color: rgba(255,255,255,0.15);
+  box-shadow:
+    0 2px 0 0 rgba(255,255,255,0.6) inset,
+    0 8px 32px rgba(0,0,0,0.10),
+    0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 20px;
+}
+
+.glass-dark {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-bottom-color: rgba(255,255,255,0.04);
+  box-shadow:
+    0 2px 0 0 rgba(255,255,255,0.12) inset,
+    0 8px 32px rgba(0,0,0,0.40),
+    0 2px 8px rgba(0,0,0,0.30);
+  border-radius: 20px;
+}
+
+.glass-sm {
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.50);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.7) inset,
+    0 4px 16px rgba(0,0,0,0.08);
+  border-radius: 14px;
+}
+
+.glass-nav {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(60px) saturate(200%);
+  -webkit-backdrop-filter: blur(60px) saturate(200%);
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.04);
+}
+
+.glass-sidebar {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(60px) saturate(200%);
+  -webkit-backdrop-filter: blur(60px) saturate(200%);
+  border-right: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 2px 0 24px rgba(0,0,0,0.06);
+}
+
+/* ── Page gradient backgrounds ───────────────────────────── */
+.page-bg {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 50%, #e0f2fe 100%);
+  min-height: 100vh;
+}
+
+.page-bg-dark {
+  background: linear-gradient(135deg, var(--color-brand-darkest) 0%, var(--color-brand-deep) 50%, var(--color-primary-600) 100%);
+  min-height: 100vh;
+}
+
+.page-bg-blue {
+  background: linear-gradient(135deg, var(--color-brand-darkest) 0%, var(--color-brand-deep) 50%, var(--color-primary-600) 100%);
+  min-height: 100vh;
+}
+
+/* ── Brand gradient backgrounds ─────────────────────────── */
+.gradient-brand {
+  background: linear-gradient(135deg, var(--color-brand-darkest) 0%, var(--color-brand-deep) 50%, var(--color-primary-600) 100%);
+}
+.gradient-brand-dark {
+  background: linear-gradient(135deg, var(--color-brand-darkest) 0%, var(--color-primary-800) 50%, var(--color-primary-600) 100%);
+}
+.gradient-brand-light {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 50%, #e0f2fe 100%);
+}
+/* directory hero — pure depth, no bright end */
+.gradient-brand-deeper {
+  background: linear-gradient(135deg, var(--color-brand-abyss) 0%, var(--color-brand-darkest) 45%, var(--color-brand-deep) 100%);
+}
+/* card cover photo */
+.gradient-cover {
+  background: linear-gradient(135deg, var(--color-primary-800) 0%, var(--color-primary-600) 60%, var(--color-primary-400) 100%);
+}
+
+/* ── Avatar fallback ─────────────────────────────────────── */
+.avatar-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(from var(--color-primary-600) r g b / 0.6) 0%,
+    rgb(from var(--color-primary-400) r g b / 0.6) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Decorative orb blobs ────────────────────────────────── */
+.orb-primary   { background: radial-gradient(circle, var(--color-orb-primary), transparent); }
+.orb-secondary { background: radial-gradient(circle, var(--color-orb-light),   transparent); }
+.orb-amber     { background: radial-gradient(circle, var(--color-orb-amber),   transparent); }
+
+/* ── Entrance animations ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* ── Stagger delays ──────────────────────────────────────── */
+.delay-1 { animation-delay:  80ms; }
+.delay-2 { animation-delay: 160ms; }
+.delay-3 { animation-delay: 240ms; }
+.delay-4 { animation-delay: 320ms; }
+.delay-5 { animation-delay: 400ms; }
+.delay-6 { animation-delay: 480ms; }
+
+/* ── PrimeVue component resets for glass context ─────────── */
+.p-component {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+}
+
+.p-button {
+  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Glass-page PrimeVue input overrides ─────────────────── */
+/* Target inputs inside pages with gradient backgrounds */
+.p-inputtext {
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
+  border-radius: 12px !important;
+  color: white !important;
+  transition: all 200ms ease;
+}
+
+.p-inputtext::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+
+.p-inputtext:focus {
+  background: rgba(255,255,255,0.22) !important;
+  border-color: rgba(255,255,255,0.55) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.15) !important;
+  color: white !important;
+  outline: none !important;
+}
+
+/* Password component */
+.p-password .p-inputtext {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
+  border-radius: 12px !important;
+  color: white !important;
+}
+
+.p-password .p-inputtext::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+
+.p-password-toggle-mask-icon {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* Select / Dropdown */
+.p-select {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(20px) !important;
+  color: white !important;
+}
+
+.p-select .p-select-label {
+  color: white !important;
+}
+
+.p-select .p-select-label.p-placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+
+.p-select-dropdown {
+  color: rgba(255,255,255,0.6) !important;
+}
+
+/* Textarea */
+.p-textarea {
+  background: rgba(255,255,255,0.15) !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
+  border-radius: 12px !important;
+  color: white !important;
+}
+
+.p-textarea::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-scale-in,
+  .animate-float { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
+}
