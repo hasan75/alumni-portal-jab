@@ -21,14 +21,33 @@ Copy `.env.example` to `.env` and fill in all three Supabase keys. The app **wil
 SUPABASE_URL=
 SUPABASE_KEY=                  # anon/public key
 SUPABASE_SERVICE_ROLE_KEY=     # service_role secret (Settings → API → Project API keys)
+NUXT_PUBLIC_APP_NAME=          # defaults to 'Alumni Portal'
+NUXT_PUBLIC_SITE_URL=          # defaults to 'http://localhost:3000'
 ```
 
 ## Architecture
 
 ### Three-layer app
-1. **Public** (`/`, `/events`, `/news`, `/jobs`, `/directory`) — `layout: default`, no auth required
-2. **Member portal** (`/feed`, `/profile`, `/directory/[id]`) — `layout: member`, `middleware: member-auth`
-3. **Admin panel** (`/admin/**`) — `layout: admin`, `middleware: admin-auth`
+1. **Public** (`/`, `/news`, `/news/[slug]`) — `layout: default`, no auth required
+2. **Auth pages** (`/login`, `/register`, `/pending`, `/admin/login`) — `layout: false`, standalone screens
+3. **Member portal** — `layout: member`, `middleware: member-auth`:
+   - `/feed`, `/feed/batch/[year]` (batch-scoped feed)
+   - `/profile`
+   - `/directory`, `/directory/[id]`
+   - `/events`, `/events/[slug]`
+   - `/jobs`, `/jobs/[slug]`
+4. **Admin panel** — `layout: admin`, `middleware: admin-auth`:
+   - `/admin/dashboard`
+   - `/admin/members`, `/admin/members/[id]`
+   - `/admin/events`, `/admin/events/[id]`
+   - `/admin/news`, `/admin/news/[id]`
+   - `/admin/jobs`, `/admin/jobs/[id]`
+   - `/admin/batches`
+   - `/admin/feed` (moderation)
+   - `/admin/settings` (site config)
+
+### Nuxt modules
+`@nuxt/eslint`, `@nuxt/fonts` (Inter), `@nuxt/icon`, `@nuxt/image`, `@primevue/nuxt-module`, `@pinia/nuxt`, `@nuxtjs/supabase`
 
 ### Directory layout (`app/` is the Nuxt 4 srcDir)
 ```
@@ -37,15 +56,37 @@ app/
   middleware/     member-auth.ts | admin-auth.ts
   stores/         auth.ts          ← Pinia store for current alumni session
   composables/    use*.ts          ← one composable per domain
-  pages/          file-based routes
+  components/     12 components organized by domain:
+                    admin/members/MemberStatusBadge.vue
+                    events/EventCard.vue | events/RsvpButton.vue
+                    feed/FeedPost.vue | feed/FeedComment.vue | feed/PostComposer.vue
+                    jobs/JobCard.vue
+                    layouts/header.vue | layouts/footer.vue
+                    member/MemberCard.vue | member/MemberProfileHeader.vue
+                    news/ArticleCard.vue
+  pages/          file-based routes (27 pages)
   types/          member.ts | event.ts | news.ts | job.ts | feed.ts
   utils/          formatters.ts
   presets/        alumni.js        ← PrimeVue theme (extends Aura, blue #2563EB)
+  assets/css/     main.css         ← Tailwind + glass utilities + PrimeVue overrides
 server/
   api/auth/register.post.ts        ← only server route; uses service role key
 supabase/
-  migrations/                      ← apply manually via Supabase dashboard or CLI
+  migrations/                      ← 5 migrations; apply via Supabase dashboard or CLI
+  seed.sql
 ```
+
+### Route rules (nuxt.config.ts)
+```
+/           → prerender (static at build time)
+/news/**    → SWR 1800s (30 min)
+/events/**  → SWR 900s  (15 min)
+/jobs/**    → SWR 1800s (30 min)
+/api/**     → CORS enabled
+```
+
+### Supabase redirect config
+Redirect is disabled (`redirect: false`). When re-enabled: login → `/login`, callback → `/feed`, excluded routes: `/`, `/directory`, `/events/**`, `/news/**`, `/jobs/**`, `/register`, `/admin/login`.
 
 ### Auth flows
 - **Self-registration**: `POST /api/auth/register` (server route) → `auth.admin.createUser()` with service role → creates `alumni_profiles` row with `status='pending'`. Admin approves in `/admin/members`.
@@ -61,15 +102,19 @@ Each composable (`useMembers`, `useEvents`, `useNews`, `useJobs`, `useFeed`) cal
 `useSiteConfig()` — **not** `useAppConfig()` (that name conflicts with Nuxt's built-in). Reads/writes the `app_config` key-value table for branding (app name, logo, primary color, tagline).
 
 ### RLS & database
-Three SECURITY DEFINER helper functions prevent infinite recursion in policies:
+Three SECURITY DEFINER **RLS helper functions** prevent infinite recursion in policies:
 - `is_admin_user()` — checks `admin_users` table
 - `is_super_admin()` — role = 'admin'
 - `is_active_alumni()` — checks `alumni_profiles.status = 'active'`
 
-Denormalized counters on `events.rsvp_count`, `feed_posts.reaction_count`, and `feed_posts.comment_count` are maintained by triggers in migration 003.
+Four SECURITY DEFINER **trigger functions** maintain denormalized counters (migration 003):
+- `update_event_rsvp_count()` → `events.rsvp_count`
+- `update_feed_reaction_count()` → `feed_posts.reaction_count`
+- `update_feed_comment_count()` → `feed_posts.comment_count`
+- `update_batch_member_count()` → `batches.member_count`
 
 ### PrimeVue components
-Components are globally registered via `@primevue/nuxt-module` (`components.include: '*'`). Import explicitly in pages/components where needed for clarity (e.g. `import Button from 'primevue/button'`), though auto-import also works. Toast and ConfirmDialog are mounted globally in `app/app.vue`.
+Components are globally registered via `@primevue/nuxt-module` (`components.include: '*'`, excludes: `Chart`, `Editor`). Import explicitly in pages/components where needed for clarity (e.g. `import Button from 'primevue/button'`), though auto-import also works. Toast and ConfirmDialog are mounted globally in `app/app.vue`.
 
 ---
 
@@ -186,12 +231,12 @@ Follow Apple's core motion principles: animations must feel **physical**, **purp
 - Use spring-based feel: prefer `cubic-bezier(0.34, 1.56, 0.64, 1)` for entrances (slight overshoot)
 - Exit animations: `cubic-bezier(0.36, 0, 0.66, 0)` (ease-in, fast exit)
 - Standard transitions: `cubic-bezier(0.25, 0.46, 0.45, 0.94)` (ease-out)
-- Duration: 200ms for micro (hover/press), 350ms for component transitions, 500ms for page-level
-- Always use Tailwind's `transition-all duration-300 ease-out` as a baseline on interactive elements
+- Duration: 200ms for micro (hover/press), 300ms for scale-in transitions, 450ms for fade-in-up, 4s for float
+- Stagger children with 80ms delay increments (`.delay-1` through `.delay-6`)
 
 **Entrance Animations**
 - Elements enter with `translate-y-4 opacity-0` → `translate-y-0 opacity-100`
-- Stagger children with 50–80ms delay increments using inline `style="animation-delay: Xms"`
+- Stagger children with 80ms delay increments using `.delay-1` through `.delay-6` classes
 - Page sections fade-in-up on scroll using `IntersectionObserver`
 - Modals/dialogs scale in from `scale-95 opacity-0` → `scale-100 opacity-100`
 
@@ -207,7 +252,7 @@ Follow Apple's core motion principles: animations must feel **physical**, **purp
 **Surfaces & Depth (Layered Materials)**
 - Background base: always a gradient or mesh (see Liquid Glass → Background requirement above) — never plain `bg-gray-50`
 - Cards: use `.glass` / `.glass-dark` utility classes — the full liquid glass stack
-- Navbar/sidebar: `glass` with slightly higher blur (`blur(60px)`) and `position: sticky`
+- Navbar/sidebar: `.glass-nav` / `.glass-sidebar` with `blur(60px)` and `position: sticky`
 - Modals/sheets: `glass` + `scale-in` animation + `inset-0` backdrop of `bg-black/20 backdrop-blur-sm`
 - Tooltips/popovers: `.glass-sm` — lighter blur, tighter radius
 - Elevated panels: increase shadow intensity, not opacity — depth comes from shadow not from being more opaque
@@ -307,85 +352,82 @@ Follow Apple's core motion principles: animations must feel **physical**, **purp
 <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-medium rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-200">
 ```
 
-### Animation & CSS Utilities (add to `app/assets/css/main.css`)
+### Animation & CSS Utilities (defined in `app/assets/css/main.css`)
+
+The file contains a `@theme` block defining custom colors (primary-50 through primary-900, slate-50 through slate-900, brand-darkest/abyss/deep, orb-primary/light/amber, Apple HIG system colors), global body/focus/scroll styles, then these utility classes:
 
 ```css
 /* ── Liquid Glass utilities ─────────────────────────────── */
-.glass {
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.45);
-  border-bottom-color: rgba(255,255,255,0.15);
-  border-right-color: rgba(255,255,255,0.15);
-  box-shadow: 0 2px 0 0 rgba(255,255,255,0.6) inset,
-              0 8px 32px rgba(0,0,0,0.10),
-              0 2px 8px rgba(0,0,0,0.08);
-  border-radius: 20px;
-}
-.glass-dark {
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(40px) saturate(200%);
-  -webkit-backdrop-filter: blur(40px) saturate(200%);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-bottom-color: rgba(255,255,255,0.04);
-  box-shadow: 0 2px 0 0 rgba(255,255,255,0.12) inset,
-              0 8px 32px rgba(0,0,0,0.40),
-              0 2px 8px rgba(0,0,0,0.30);
-  border-radius: 20px;
-}
-.glass-sm {
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.50);
-  box-shadow: 0 1px 0 0 rgba(255,255,255,0.7) inset,
-              0 4px 16px rgba(0,0,0,0.08);
-  border-radius: 14px;
-}
+.glass { /* standard glass — blur(40px) saturate(180%) */ }
+.glass-dark { /* dark mode glass — blur(40px) saturate(200%) */ }
+.glass-sm { /* compact glass — blur(20px), radius 14px */ }
+.glass-nav { /* navbar — blur(60px) saturate(200%), higher opacity 0.72 */ }
+.glass-sidebar { /* sidebar — blur(60px), right border */ }
 .glass-blue  { background: rgba(0,122,255,0.15);  border-color: rgba(0,122,255,0.30); }
 .glass-green { background: rgba(52,199,89,0.12);  border-color: rgba(52,199,89,0.25); }
 .glass-red   { background: rgba(255,59,48,0.12);  border-color: rgba(255,59,48,0.25); }
 
+/* ── Page & brand gradient backgrounds ──────────────────── */
+.page-bg          { /* light mode page — primary-50 to primary-100 */ }
+.page-bg-dark     { /* dark mode page — brand-darkest to brand-deep */ }
+.page-bg-blue     { /* alias for page-bg-dark */ }
+.gradient-brand         { /* hero gradient — darkest → deep → primary-600 */ }
+.gradient-brand-dark    { /* darker variant */ }
+.gradient-brand-light   { /* light mode variant */ }
+.gradient-brand-deeper  { /* directory hero — pure depth, no bright end */ }
+.gradient-cover         { /* card cover photo gradient */ }
+.avatar-gradient        { /* avatar fallback gradient */ }
+.orb-primary   { /* blue decorative blob */ }
+.orb-secondary { /* light blue blob */ }
+.orb-amber     { /* amber blob */ }
+
 /* ── Entrance animations ─────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
-  animation: fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: fadeInUp 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.94); }
   to   { opacity: 1; transform: scale(1); }
 }
 .animate-scale-in {
-  animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes shimmer {
-  from { background-position: -200% center; }
-  to   { background-position:  200% center; }
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
 }
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.4) 50%, transparent 75%);
-  background-size: 200% auto;
-  animation: shimmer 1.5s linear infinite;
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }
+
+@keyframes shimmer { /* -200% → 200% background-position */ }
+.animate-shimmer { animation: shimmer 1.5s linear infinite; }
 
 /* ── Stagger helpers ─────────────────────────────────────── */
-.delay-1 { animation-delay:  60ms; }
-.delay-2 { animation-delay: 120ms; }
-.delay-3 { animation-delay: 180ms; }
-.delay-4 { animation-delay: 240ms; }
-.delay-5 { animation-delay: 300ms; }
+.delay-1 { animation-delay:  80ms; }
+.delay-2 { animation-delay: 160ms; }
+.delay-3 { animation-delay: 240ms; }
+.delay-4 { animation-delay: 320ms; }
+.delay-5 { animation-delay: 400ms; }
+.delay-6 { animation-delay: 480ms; }
+
+/* ── PrimeVue component overrides for glass context ──────── */
+/* .p-inputtext, .p-password, .p-select, .p-textarea —
+   all override to glass-style: rgba(255,255,255,0.15) bg,
+   blur(20px), white text, white/45% placeholder,
+   focus ring rgba(255,255,255,0.15) */
 
 /* ── Reduced motion ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-scale-in,
-  .animate-shimmer { animation: none; }
+  .animate-float { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
 }
 ```
