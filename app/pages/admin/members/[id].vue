@@ -13,6 +13,7 @@ const id = route.params.id as string
 
 const { fetchProfile, updateMember, approveMembers, rejectMember, suspendMember, fetchBatches } = useMembers()
 const toast = useToast()
+const confirm = useConfirm()
 
 const profile = ref<any>(null)
 const loading = ref(false)
@@ -62,6 +63,7 @@ async function save() {
   const result = await updateMember(id, form)
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Member updated', life: 2000 })
+    await navigateTo('/admin/members')
   }
   else {
     toast.add({ severity: 'error', summary: 'Update failed', detail: result.error, life: 3000 })
@@ -70,12 +72,20 @@ async function save() {
 }
 
 async function approve() {
-  const result = await approveMembers([id])
-  if (result.success) {
-    profile.value.status = 'active'
-    form.status = 'active'
-    toast.add({ severity: 'success', summary: 'Member approved!', life: 2000 })
-  }
+  confirm.require({
+    message: `Approve ${profile.value?.full_name || 'this member'}?`,
+    header: 'Confirm Approval',
+    icon: 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      const result = await approveMembers([id])
+      if (result.success) {
+        profile.value.status = 'active'
+        form.status = 'active'
+        toast.add({ severity: 'success', summary: 'Member approved!', life: 2000 })
+      }
+    },
+  })
 }
 </script>
 

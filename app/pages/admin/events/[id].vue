@@ -88,7 +88,7 @@ async function save() {
   const result = await saveEvent(payload)
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Event saved!', life: 2000 })
-    if (isNew) navigateTo(`/admin/events/${result.data.id}`)
+    await navigateTo('/admin/events')
   }
   else {
     toast.add({ severity: 'error', summary: 'Save failed', detail: result.error, life: 3000 })

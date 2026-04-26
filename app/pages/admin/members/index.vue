@@ -61,12 +61,23 @@ watch(statusFilter, () => {
 })
 
 async function handleApprove(ids: string[]) {
-  const result = await approveMembers(ids)
-  if (result.success) {
-    toast.add({ severity: 'success', summary: `${ids.length} member(s) approved`, life: 3000 })
-    await loadMembers()
-    selectedMembers.value = []
-  }
+  const count = ids.length
+  confirm.require({
+    message: count === 1
+      ? 'Approve this member?'
+      : `Approve ${count} selected members?`,
+    header: 'Confirm Approval',
+    icon: 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      const result = await approveMembers(ids)
+      if (result.success) {
+        toast.add({ severity: 'success', summary: `${count} member(s) approved`, life: 3000 })
+        await loadMembers()
+        selectedMembers.value = []
+      }
+    },
+  })
 }
 
 async function handleReject(id: string, name: string) {

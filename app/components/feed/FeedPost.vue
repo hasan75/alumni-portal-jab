@@ -15,6 +15,7 @@ const emit = defineEmits<{
 const { toggleReaction, fetchComments, addComment, removePost, hidePost } = useFeed()
 const authStore = useAuthStore()
 const toast = useToast()
+const confirm = useConfirm()
 
 const comments = ref<FeedComment[]>([])
 const showComments = ref(false)
@@ -54,20 +55,36 @@ async function handleAddComment() {
 }
 
 async function handleRemove() {
-  const reason = prompt('Reason for removal:')
-  if (!reason) return
-  const result = await removePost(props.post.id, reason)
-  if (result.success) {
-    emit('removed', props.post.id)
-    toast.add({ severity: 'success', summary: 'Post removed', life: 2000 })
-  }
+  confirm.require({
+    message: 'Remove this post? This action cannot be undone.',
+    header: 'Confirm Removal',
+    icon: 'pi pi-trash',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      const reason = prompt('Reason for removal:')
+      if (!reason) return
+      const result = await removePost(props.post.id, reason)
+      if (result.success) {
+        emit('removed', props.post.id)
+        toast.add({ severity: 'success', summary: 'Post removed', life: 2000 })
+      }
+    },
+  })
 }
 
 async function handleHide() {
-  const result = await hidePost(props.post.id)
-  if (result.success) {
-    toast.add({ severity: 'info', summary: 'Post hidden', life: 2000 })
-  }
+  confirm.require({
+    message: 'Hide this post from the feed?',
+    header: 'Confirm Hide',
+    icon: 'pi pi-eye-slash',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      const result = await hidePost(props.post.id)
+      if (result.success) {
+        toast.add({ severity: 'info', summary: 'Post hidden', life: 2000 })
+      }
+    },
+  })
 }
 </script>
 

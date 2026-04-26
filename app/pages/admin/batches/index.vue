@@ -9,6 +9,7 @@ useSeoMeta({ title: 'Batches | Admin', robots: 'noindex' })
 
 const supabase = useSupabaseClient()
 const toast = useToast()
+const confirm = useConfirm()
 
 const batches = ref<any[]>([])
 const loading = ref(false)
@@ -45,8 +46,17 @@ async function addBatch() {
 }
 
 async function toggleActive(id: number, current: boolean) {
-  await supabase.from('batches').update({ is_active: !current }).eq('id', id)
-  await load()
+  const action = current ? 'Deactivate' : 'Activate'
+  confirm.require({
+    message: `${action} this batch?`,
+    header: `Confirm ${action}`,
+    icon: current ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      await supabase.from('batches').update({ is_active: !current }).eq('id', id)
+      await load()
+    },
+  })
 }
 </script>
 

@@ -78,7 +78,7 @@ async function save() {
   const result = await saveJob(payload)
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Job saved!', life: 2000 })
-    if (isNew) navigateTo(`/admin/jobs/${result.data.id}`)
+    await navigateTo('/admin/jobs')
   }
   else {
     toast.add({ severity: 'error', summary: 'Save failed', detail: result.error, life: 3000 })
