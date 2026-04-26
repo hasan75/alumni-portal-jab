@@ -110,6 +110,18 @@ html {
   border-radius: 14px;
 }
 
+.glass-light {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow:
+    0 2px 0 0 rgba(255,255,255,0.9) inset,
+    0 8px 32px rgba(0,0,0,0.06),
+    0 2px 8px rgba(0,0,0,0.04);
+  border-radius: 20px;
+}
+
 .glass-nav {
   background: rgba(255,255,255,0.72);
   backdrop-filter: blur(60px) saturate(200%);
@@ -230,9 +242,7 @@ html {
 /* Only apply glass styling to inputs inside dark/glass containers */
 .glass .p-inputtext,
 .glass-dark .p-inputtext,
-.gradient-brand .p-inputtext,
-.gradient-brand-dark .p-inputtext,
-.gradient-brand-light .glass .p-inputtext {
+.gradient-brand-dark .p-inputtext {
   background: rgba(255,255,255,0.15) !important;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
@@ -243,14 +253,12 @@ html {
 
 .glass .p-inputtext::placeholder,
 .glass-dark .p-inputtext::placeholder,
-.gradient-brand .p-inputtext::placeholder,
 .gradient-brand-dark .p-inputtext::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
 .glass .p-inputtext:focus,
 .glass-dark .p-inputtext:focus,
-.gradient-brand .p-inputtext:focus,
 .gradient-brand-dark .p-inputtext:focus {
   background: rgba(255,255,255,0.22) !important;
   border-color: rgba(255,255,255,0.55) !important;
@@ -262,7 +270,6 @@ html {
 /* Password component */
 .glass .p-password .p-inputtext,
 .glass-dark .p-password .p-inputtext,
-.gradient-brand .p-password .p-inputtext,
 .gradient-brand-dark .p-password .p-inputtext {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
@@ -272,14 +279,12 @@ html {
 
 .glass .p-password .p-inputtext::placeholder,
 .glass-dark .p-password .p-inputtext::placeholder,
-.gradient-brand .p-password .p-inputtext::placeholder,
 .gradient-brand-dark .p-password .p-inputtext::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
 .glass .p-password-toggle-mask-icon,
 .glass-dark .p-password-toggle-mask-icon,
-.gradient-brand .p-password-toggle-mask-icon,
 .gradient-brand-dark .p-password-toggle-mask-icon {
   color: rgba(255,255,255,0.5) !important;
 }
@@ -287,7 +292,6 @@ html {
 /* Select / Dropdown */
 .glass .p-select,
 .glass-dark .p-select,
-.gradient-brand .p-select,
 .gradient-brand-dark .p-select {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
@@ -298,21 +302,18 @@ html {
 
 .glass .p-select .p-select-label,
 .glass-dark .p-select .p-select-label,
-.gradient-brand .p-select .p-select-label,
 .gradient-brand-dark .p-select .p-select-label {
   color: white !important;
 }
 
 .glass .p-select .p-select-label.p-placeholder,
 .glass-dark .p-select .p-select-label.p-placeholder,
-.gradient-brand .p-select .p-select-label.p-placeholder,
 .gradient-brand-dark .p-select .p-select-label.p-placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
 .glass .p-select-dropdown,
 .glass-dark .p-select-dropdown,
-.gradient-brand .p-select-dropdown,
 .gradient-brand-dark .p-select-dropdown {
   color: rgba(255,255,255,0.6) !important;
 }
@@ -320,7 +321,6 @@ html {
 /* Textarea */
 .glass .p-textarea,
 .glass-dark .p-textarea,
-.gradient-brand .p-textarea,
 .gradient-brand-dark .p-textarea {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
@@ -330,7 +330,6 @@ html {
 
 .glass .p-textarea::placeholder,
 .glass-dark .p-textarea::placeholder,
-.gradient-brand .p-textarea::placeholder,
 .gradient-brand-dark .p-textarea::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }

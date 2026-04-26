@@ -45,8 +45,8 @@ async function handlePost() {
 </script>
 
 <template>
-  <div class="glass relative overflow-hidden p-5 animate-fade-in-up">
-    <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/30 via-transparent to-transparent" />
+  <div class="glass-light relative overflow-hidden p-5 animate-fade-in-up">
+    <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
     <div class="relative flex gap-3">
       <!-- Avatar -->
@@ -54,7 +54,7 @@ async function handlePost() {
         <img
           v-if="authStore.profile?.avatar_url"
           :src="authStore.profile.avatar_url"
-          class="w-9 h-9 rounded-full object-cover ring-2 ring-white/30"
+          class="w-9 h-9 rounded-full object-cover ring-2 ring-primary-200"
           alt="Your avatar"
         >
         <div
@@ -70,8 +70,7 @@ async function handlePost() {
           v-model="content"
           :rows="expanded ? 4 : 2"
           placeholder="Share something with your alumni network..."
-          class="w-full resize-none rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none transition-all duration-200"
-          style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.20);backdrop-filter:blur(10px);"
+          class="w-full resize-none rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-200 transition-all duration-200 bg-slate-50 border border-slate-200"
           @focus="expanded = true"
         />
 
@@ -82,27 +81,25 @@ async function handlePost() {
         >
           <div v-if="expanded" class="flex items-center justify-between mt-3">
             <div class="flex gap-2">
-              <span v-if="scope === 'batch' && batchYear" class="text-xs text-primary-300 px-2.5 py-1 rounded-full" style="background:rgba(147,197,253,0.15);border:1px solid rgba(147,197,253,0.25);">
+              <span v-if="scope === 'batch' && batchYear" class="text-xs text-primary-700 px-2.5 py-1 rounded-full bg-primary-50 border border-primary-200">
                 Batch {{ batchYear }} feed
               </span>
-              <span v-else class="text-xs text-white/50 px-2.5 py-1 rounded-full" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);">
+              <span v-else class="text-xs text-slate-500 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
                 General feed
               </span>
             </div>
             <div class="flex gap-2">
               <button
-                class="px-3 py-1.5 text-sm text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-150"
+                class="px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all duration-150"
                 @click="expanded = false; content = ''"
               >
                 Cancel
               </button>
               <button
-                class="relative overflow-hidden px-4 py-1.5 text-sm font-semibold text-white rounded-xl hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-40"
-                style="background:rgba(255,255,255,0.20);border:1px solid rgba(255,255,255,0.35);box-shadow:0 2px 0 rgba(255,255,255,0.2) inset;"
+                class="px-4 py-1.5 text-sm font-semibold text-white rounded-xl bg-primary-600 hover:bg-primary-500 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-40 shadow-sm shadow-primary-600/20"
                 :disabled="!content.trim() || loading"
                 @click="handlePost"
               >
-                <span class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-white/15 to-transparent" />
                 <i v-if="loading" class="pi pi-spin pi-spinner mr-1" />
                 Post
               </button>
@@ -113,4 +110,3 @@ async function handlePost() {
     </div>
   </div>
 </template>
-

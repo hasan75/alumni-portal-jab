@@ -13,24 +13,11 @@ useSeoMeta({
 })
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
 const authStore = useAuthStore()
 const { appName } = useSiteConfig()
 
 const route = useRoute()
 const errorParam = route.query.error
-
-watch(user, async (newUser) => {
-  if (newUser) {
-    await authStore.loadProfile()
-    if (authStore.isPending) {
-      navigateTo('/pending')
-    }
-    else if (authStore.isActive) {
-      navigateTo('/feed')
-    }
-  }
-}, { immediate: true })
 
 const email = ref('')
 const password = ref('')
@@ -47,7 +34,7 @@ async function handleLogin() {
   error.value = ''
 
   try {
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email.value,
       password: password.value,
     })
@@ -57,6 +44,30 @@ async function handleLogin() {
         ? 'Invalid email or password'
         : authError.message
       return
+    }
+
+    const userId = authData.user?.id
+    if (!userId) {
+      error.value = 'Login failed — no user returned'
+      return
+    }
+
+    await authStore.loadProfile(userId)
+
+    if (authStore.isSuspended) {
+      await supabase.auth.signOut()
+      error.value = 'Your account has been suspended. Please contact the administrator.'
+      return
+    }
+
+    if (authStore.isPending) {
+      await navigateTo('/pending')
+    }
+    else if (authStore.isActive) {
+      await navigateTo('/feed')
+    }
+    else {
+      error.value = 'Account not found or rejected'
     }
   }
   catch (e: any) {

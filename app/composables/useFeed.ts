@@ -10,7 +10,7 @@ export function useFeed() {
   const error = ref<string | null>(null)
   const hasMore = ref(true)
 
-  const PAGE_SIZE = 10
+  const PAGE_SIZE = 25
 
   async function fetchPosts(scope: PostScope = 'general', batchYear?: number, page: number = 1) {
     const isFirstPage = page === 1
@@ -218,10 +218,17 @@ export function useFeed() {
     return { success: !updateError, error: updateError?.message }
   }
 
-  async function fetchAllForAdmin(page: number = 1, status?: string) {
+  async function fetchAllForAdmin(page: number = 1, status?: string, perPage?: number) {
     loading.value = true
-    const from = (page - 1) * PAGE_SIZE
-    const to = from + PAGE_SIZE - 1
+    const size = perPage || PAGE_SIZE
+    const from = (page - 1) * size
+    const to = from + size - 1
+
+    let countQuery = supabase
+      .from('feed_posts')
+      .select('id', { count: 'exact', head: true })
+    if (status) countQuery = countQuery.eq('status', status)
+    const { count } = await countQuery
 
     let query = supabase
       .from('feed_posts')
@@ -237,8 +244,8 @@ export function useFeed() {
     const { data, error: fetchError } = await query
 
     loading.value = false
-    if (fetchError) return []
-    return (data as FeedPost[]) || []
+    if (fetchError) return { data: [], totalCount: 0 }
+    return { data: (data as FeedPost[]) || [], totalCount: count || 0 }
   }
 
   return {

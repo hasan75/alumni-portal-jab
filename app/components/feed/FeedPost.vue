@@ -89,8 +89,8 @@ async function handleHide() {
 </script>
 
 <template>
-  <div class="glass relative overflow-hidden animate-fade-in-up">
-    <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/30 via-transparent to-transparent z-10" />
+  <div class="glass-light relative overflow-hidden animate-fade-in-up">
+    <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent z-10" />
 
     <!-- Header -->
     <div class="relative p-5 flex items-start justify-between gap-3">
@@ -98,7 +98,7 @@ async function handleHide() {
         <img
           v-if="post.author?.avatar_url"
           :src="post.author.avatar_url"
-          class="w-10 h-10 rounded-full object-cover ring-2 ring-white/25 shrink-0"
+          class="w-10 h-10 rounded-full object-cover ring-2 ring-primary-200 shrink-0"
           alt="Author"
         >
         <div
@@ -110,29 +110,29 @@ async function handleHide() {
         <div>
           <NuxtLink
             :to="`/directory/${post.author_id}`"
-            class="font-semibold text-white hover:text-primary-200 text-sm transition-colors"
+            class="font-semibold text-slate-900 hover:text-primary-600 text-sm transition-colors"
           >
             {{ post.author?.display_name || post.author?.full_name }}
           </NuxtLink>
-          <p v-if="post.author?.current_job_title" class="text-xs text-white/50 mt-0.5">
+          <p v-if="post.author?.current_job_title" class="text-xs text-slate-500 mt-0.5">
             {{ post.author.current_job_title }}
             <span v-if="post.author.current_company"> · {{ post.author.current_company }}</span>
           </p>
-          <p class="text-xs text-white/30 mt-0.5">{{ formatRelativeTime(post.created_at) }}</p>
+          <p class="text-xs text-slate-400 mt-0.5">{{ formatRelativeTime(post.created_at) }}</p>
         </div>
       </div>
 
       <!-- Admin controls -->
       <div v-if="adminMode" class="flex gap-1 shrink-0">
         <button
-          class="p-2 text-white/40 hover:text-amber-300 hover:bg-amber-400/10 rounded-lg transition-all duration-150 text-xs"
+          class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-150 text-xs"
           title="Hide post"
           @click="handleHide"
         >
           <i class="pi pi-eye-slash" />
         </button>
         <button
-          class="p-2 text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all duration-150 text-xs"
+          class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 text-xs"
           title="Remove post"
           @click="handleRemove"
         >
@@ -143,7 +143,7 @@ async function handleHide() {
 
     <!-- Content -->
     <div class="relative px-5 pb-4">
-      <p class="text-sm text-white/85 whitespace-pre-line leading-relaxed">{{ post.content }}</p>
+      <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed">{{ post.content }}</p>
 
       <div
         v-if="post.image_urls && post.image_urls.length > 0"
@@ -161,7 +161,7 @@ async function handleHide() {
     </div>
 
     <!-- Reactions bar -->
-    <div class="relative px-5 pb-4 flex items-center justify-between border-t border-white/10 pt-3">
+    <div class="relative px-5 pb-4 flex items-center justify-between border-t border-slate-200 pt-3">
       <div class="flex items-center gap-1">
         <button
           v-for="(emoji, type) in reactionEmojis"
@@ -169,21 +169,20 @@ async function handleHide() {
           class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm transition-all duration-150 hover:scale-110"
           :class="[
             post.my_reaction === type
-              ? 'scale-110'
+              ? 'scale-110 bg-primary-50 border border-primary-200'
               : 'opacity-60 hover:opacity-100',
           ]"
-          :style="post.my_reaction === type ? 'background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);' : ''"
           @click="handleReaction(type as ReactionType)"
         >
           <span>{{ emoji }}</span>
         </button>
-        <span v-if="post.reaction_count > 0" class="text-xs text-white/40 ml-1">
+        <span v-if="post.reaction_count > 0" class="text-xs text-slate-400 ml-1">
           {{ post.reaction_count }}
         </span>
       </div>
 
       <button
-        class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-all duration-150"
+        class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-all duration-150"
         @click="toggleComments"
       >
         <i class="pi pi-comment text-xs" />
@@ -197,8 +196,8 @@ async function handleHide() {
       enter-from-class="opacity-0 -translate-y-2"
       enter-to-class="opacity-100 translate-y-0"
     >
-      <div v-if="showComments" class="relative border-t border-white/10 px-5 py-4 space-y-3">
-        <div v-if="loadingComments" class="text-sm text-white/40 text-center py-2">
+      <div v-if="showComments" class="relative border-t border-slate-200 px-5 py-4 space-y-3">
+        <div v-if="loadingComments" class="text-sm text-slate-400 text-center py-2">
           Loading comments...
         </div>
 
@@ -207,20 +206,20 @@ async function handleHide() {
           :key="comment.id"
           class="flex gap-2"
         >
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white/60 text-xs font-medium shrink-0" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.15);">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 text-xs font-medium shrink-0 bg-slate-100 border border-slate-200">
             {{ comment.author?.full_name?.charAt(0)?.toUpperCase() || '?' }}
           </div>
-          <div class="flex-1 rounded-xl px-3.5 py-2.5" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);">
-            <p class="text-xs font-semibold text-white/70">
+          <div class="flex-1 rounded-xl px-3.5 py-2.5 bg-slate-50 border border-slate-100">
+            <p class="text-xs font-semibold text-slate-600">
               {{ comment.author?.display_name || comment.author?.full_name }}
             </p>
-            <p class="text-sm text-white/80 mt-0.5">{{ comment.content }}</p>
+            <p class="text-sm text-slate-700 mt-0.5">{{ comment.content }}</p>
           </div>
         </div>
 
         <!-- Comment input -->
         <div class="flex gap-2 pt-1">
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white/60 text-xs font-medium shrink-0 avatar-gradient">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 avatar-gradient">
             {{ authStore.displayName.charAt(0).toUpperCase() }}
           </div>
           <div class="flex-1 flex gap-2">
@@ -228,17 +227,14 @@ async function handleHide() {
               v-model="commentText"
               type="text"
               placeholder="Write a comment..."
-              class="flex-1 text-sm rounded-xl px-3.5 py-2 text-white placeholder:text-white/30 focus:outline-none transition-all duration-200"
-              style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);"
+              class="flex-1 text-sm rounded-xl px-3.5 py-2 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-200 transition-all duration-200 bg-slate-50 border border-slate-200"
               @keyup.enter="handleAddComment"
             >
             <button
-              class="relative overflow-hidden px-3.5 py-2 text-sm font-semibold text-white rounded-xl hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-40"
-              style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.30);box-shadow:0 2px 0 rgba(255,255,255,0.2) inset;"
+              class="px-3.5 py-2 text-sm font-semibold text-white rounded-xl bg-primary-600 hover:bg-primary-500 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-40 shadow-sm shadow-primary-600/20"
               :disabled="!commentText.trim() || postingComment"
               @click="handleAddComment"
             >
-              <span class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-white/15 to-transparent" />
               <i v-if="postingComment" class="pi pi-spin pi-spinner" />
               <i v-else class="pi pi-send" />
             </button>
@@ -248,4 +244,3 @@ async function handleHide() {
     </Transition>
   </div>
 </template>
-

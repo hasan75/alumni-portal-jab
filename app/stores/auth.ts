@@ -12,11 +12,12 @@ export const useAuthStore = defineStore('auth', () => {
   const batchYear = computed(() => profile.value?.batch_year)
   const displayName = computed(() => profile.value?.display_name || profile.value?.full_name || '')
 
-  async function loadProfile() {
+  async function loadProfile(userId?: string) {
     const supabase = useSupabaseClient()
     const user = useSupabaseUser()
 
-    if (!user.value) {
+    const id = userId || user.value?.id
+    if (!id) {
       profile.value = null
       isLoaded.value = true
       return
@@ -25,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
     const { data, error } = await supabase
       .from('alumni_profiles')
       .select('*')
-      .eq('id', user.value.id)
+      .eq('id', id)
       .single()
 
     if (error) {

@@ -90,42 +90,42 @@ async function saveProfile() {
 <template>
   <div class="max-w-2xl mx-auto space-y-5">
     <div class="animate-fade-in-up">
-      <p class="text-xs font-semibold tracking-widest uppercase text-white/60 mb-1">Account</p>
-      <h1 class="text-3xl font-semibold tracking-tight text-white">My Profile</h1>
-      <p class="text-white/50 text-sm mt-1">Update your alumni profile information</p>
+      <p class="text-xs font-semibold tracking-widest uppercase text-primary-600 mb-1">Account</p>
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900">My Profile</h1>
+      <p class="text-slate-500 text-sm mt-1">Update your alumni profile information</p>
     </div>
 
     <form class="space-y-5" @submit.prevent="saveProfile">
       <!-- Basic Info -->
-      <div class="glass relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-1">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <h2 class="font-semibold text-white relative">Basic Information</h2>
+      <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-1">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <h2 class="font-semibold text-slate-900 relative">Basic Information</h2>
 
         <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Full Name *</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Full Name *</label>
             <InputText v-model="form.full_name" class="w-full" placeholder="Your full name" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Display Name</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Display Name</label>
             <InputText v-model="form.display_name" class="w-full" placeholder="Shown publicly" />
           </div>
         </div>
 
         <div class="relative">
-          <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Bio</label>
+          <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Bio</label>
           <Textarea v-model="form.bio" :rows="3" class="w-full" placeholder="Tell your alumni community about yourself" />
         </div>
       </div>
 
       <!-- Academic Info -->
-      <div class="glass relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-2">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <h2 class="font-semibold text-white relative">Academic Information</h2>
+      <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-2">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <h2 class="font-semibold text-slate-900 relative">Academic Information</h2>
 
         <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Graduation Year</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Graduation Year</label>
             <Select
               v-model="form.batch_year"
               :options="batches"
@@ -136,63 +136,63 @@ async function saveProfile() {
             />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Department</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Department</label>
             <InputText v-model="form.department" class="w-full" placeholder="e.g. Computer Science" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Degree</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Degree</label>
             <InputText v-model="form.degree" class="w-full" placeholder="e.g. BSc, MSc" />
           </div>
         </div>
       </div>
 
       <!-- Professional Info -->
-      <div class="glass relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-3">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <h2 class="font-semibold text-white relative">Professional Information</h2>
+      <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-3">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <h2 class="font-semibold text-slate-900 relative">Professional Information</h2>
 
         <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Job Title</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Job Title</label>
             <InputText v-model="form.current_job_title" class="w-full" placeholder="e.g. Software Engineer" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Company</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Company</label>
             <InputText v-model="form.current_company" class="w-full" placeholder="Current employer" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Industry</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Industry</label>
             <InputText v-model="form.industry" class="w-full" placeholder="e.g. Technology" />
           </div>
         </div>
       </div>
 
       <!-- Location & Contact -->
-      <div class="glass relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-4">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <h2 class="font-semibold text-white relative">Location & Contact</h2>
+      <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-4">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <h2 class="font-semibold text-slate-900 relative">Location & Contact</h2>
 
         <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">City</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">City</label>
             <InputText v-model="form.city" class="w-full" placeholder="Your city" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Country</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Country</label>
             <InputText v-model="form.country" class="w-full" placeholder="Your country" />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-white/50 mb-2">Phone</label>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Phone</label>
             <InputText v-model="form.phone" class="w-full" placeholder="Phone number" />
           </div>
         </div>
       </div>
 
       <!-- Privacy -->
-      <div class="glass relative overflow-hidden p-6 space-y-3 animate-fade-in-up delay-5">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <h2 class="font-semibold text-white relative">Privacy Settings</h2>
-        <p class="text-sm text-white/50 relative">Control what other alumni can see on your profile</p>
+      <div class="glass-light relative overflow-hidden p-6 space-y-3 animate-fade-in-up delay-5">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <h2 class="font-semibold text-slate-900 relative">Privacy Settings</h2>
+        <p class="text-sm text-slate-500 relative">Control what other alumni can see on your profile</p>
 
         <div
           v-for="item in [
@@ -201,9 +201,9 @@ async function saveProfile() {
             { field: 'show_dob', label: 'Show date of birth to other alumni' },
           ]"
           :key="item.field"
-          class="relative flex items-center justify-between py-3 border-b border-white/10 last:border-0"
+          class="relative flex items-center justify-between py-3 border-b border-slate-200 last:border-0"
         >
-          <span class="text-sm text-white/75">{{ item.label }}</span>
+          <span class="text-sm text-slate-600">{{ item.label }}</span>
           <ToggleSwitch v-model="(form as any)[item.field]" />
         </div>
       </div>
@@ -211,11 +211,9 @@ async function saveProfile() {
       <div class="flex justify-end animate-fade-in-up delay-5">
         <button
           type="submit"
-          class="relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl text-white hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-60"
-          style="background:rgba(255,255,255,0.20);border:1px solid rgba(255,255,255,0.40);box-shadow:0 2px 0 rgba(255,255,255,0.4) inset,0 4px 20px rgba(0,0,0,0.2);"
+          class="inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl text-white bg-primary-600 hover:bg-primary-500 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 disabled:opacity-60 shadow-sm shadow-primary-600/30"
           :disabled="saving"
         >
-          <span class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent" />
           <i v-if="saving" class="pi pi-spin pi-spinner" />
           <i v-else class="pi pi-save" />
           Save Profile
@@ -224,4 +222,3 @@ async function saveProfile() {
     </form>
   </div>
 </template>
-
