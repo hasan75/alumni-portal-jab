@@ -8,12 +8,7 @@ definePageMeta({ layout: false })
 useSeoMeta({ title: 'Admin Login | Alumni Portal', robots: 'noindex, nofollow' })
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
 const { appName } = useSiteConfig()
-
-watch(user, (newUser) => {
-  if (newUser) navigateTo('/admin/dashboard')
-}, { immediate: true })
 
 const email = ref('')
 const password = ref('')
@@ -30,7 +25,7 @@ async function handleLogin() {
   error.value = ''
 
   try {
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email.value,
       password: password.value,
     })
@@ -42,11 +37,16 @@ async function handleLogin() {
       return
     }
 
-    // Verify admin_users record exists
+    const userId = authData.user?.id
+    if (!userId) {
+      error.value = 'Login failed — no user returned'
+      return
+    }
+
     const { data: adminData } = await supabase
       .from('admin_users')
       .select('id, is_active')
-      .eq('email', email.value)
+      .eq('id', userId)
       .single()
 
     if (!adminData || !adminData.is_active) {
@@ -55,7 +55,7 @@ async function handleLogin() {
       return
     }
 
-    navigateTo('/admin/dashboard')
+    await navigateTo('/admin/dashboard')
   }
   catch (e: any) {
     error.value = e.message || 'Login failed'

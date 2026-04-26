@@ -226,9 +226,13 @@ html {
   transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* ── Glass-page PrimeVue input overrides ─────────────────── */
-/* Target inputs inside pages with gradient backgrounds */
-.p-inputtext {
+/* ── Glass-context PrimeVue input overrides ──────────────── */
+/* Only apply glass styling to inputs inside dark/glass containers */
+.glass .p-inputtext,
+.glass-dark .p-inputtext,
+.gradient-brand .p-inputtext,
+.gradient-brand-dark .p-inputtext,
+.gradient-brand-light .glass .p-inputtext {
   background: rgba(255,255,255,0.15) !important;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
@@ -237,11 +241,17 @@ html {
   transition: all 200ms ease;
 }
 
-.p-inputtext::placeholder {
+.glass .p-inputtext::placeholder,
+.glass-dark .p-inputtext::placeholder,
+.gradient-brand .p-inputtext::placeholder,
+.gradient-brand-dark .p-inputtext::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
-.p-inputtext:focus {
+.glass .p-inputtext:focus,
+.glass-dark .p-inputtext:focus,
+.gradient-brand .p-inputtext:focus,
+.gradient-brand-dark .p-inputtext:focus {
   background: rgba(255,255,255,0.22) !important;
   border-color: rgba(255,255,255,0.55) !important;
   box-shadow: 0 0 0 3px rgba(255,255,255,0.15) !important;
@@ -250,23 +260,35 @@ html {
 }
 
 /* Password component */
-.p-password .p-inputtext {
+.glass .p-password .p-inputtext,
+.glass-dark .p-password .p-inputtext,
+.gradient-brand .p-password .p-inputtext,
+.gradient-brand-dark .p-password .p-inputtext {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
   color: white !important;
 }
 
-.p-password .p-inputtext::placeholder {
+.glass .p-password .p-inputtext::placeholder,
+.glass-dark .p-password .p-inputtext::placeholder,
+.gradient-brand .p-password .p-inputtext::placeholder,
+.gradient-brand-dark .p-password .p-inputtext::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
-.p-password-toggle-mask-icon {
+.glass .p-password-toggle-mask-icon,
+.glass-dark .p-password-toggle-mask-icon,
+.gradient-brand .p-password-toggle-mask-icon,
+.gradient-brand-dark .p-password-toggle-mask-icon {
   color: rgba(255,255,255,0.5) !important;
 }
 
 /* Select / Dropdown */
-.p-select {
+.glass .p-select,
+.glass-dark .p-select,
+.gradient-brand .p-select,
+.gradient-brand-dark .p-select {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
@@ -274,27 +296,42 @@ html {
   color: white !important;
 }
 
-.p-select .p-select-label {
+.glass .p-select .p-select-label,
+.glass-dark .p-select .p-select-label,
+.gradient-brand .p-select .p-select-label,
+.gradient-brand-dark .p-select .p-select-label {
   color: white !important;
 }
 
-.p-select .p-select-label.p-placeholder {
+.glass .p-select .p-select-label.p-placeholder,
+.glass-dark .p-select .p-select-label.p-placeholder,
+.gradient-brand .p-select .p-select-label.p-placeholder,
+.gradient-brand-dark .p-select .p-select-label.p-placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 
-.p-select-dropdown {
+.glass .p-select-dropdown,
+.glass-dark .p-select-dropdown,
+.gradient-brand .p-select-dropdown,
+.gradient-brand-dark .p-select-dropdown {
   color: rgba(255,255,255,0.6) !important;
 }
 
 /* Textarea */
-.p-textarea {
+.glass .p-textarea,
+.glass-dark .p-textarea,
+.gradient-brand .p-textarea,
+.gradient-brand-dark .p-textarea {
   background: rgba(255,255,255,0.15) !important;
   border: 1px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
   color: white !important;
 }
 
-.p-textarea::placeholder {
+.glass .p-textarea::placeholder,
+.glass-dark .p-textarea::placeholder,
+.gradient-brand .p-textarea::placeholder,
+.gradient-brand-dark .p-textarea::placeholder {
   color: rgba(255,255,255,0.45) !important;
 }
 

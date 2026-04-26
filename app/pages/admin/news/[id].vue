@@ -4,7 +4,6 @@ import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { slugify } from '~/utils/formatters'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -52,10 +51,6 @@ onMounted(async () => {
   }
 })
 
-watch(() => form.title, (title) => {
-  if (isNew) form.slug = slugify(title)
-})
-
 watch(() => form.status, (status) => {
   if (status === 'published' && !form.published_at) {
     form.published_at = new Date().toISOString()
@@ -63,13 +58,17 @@ watch(() => form.status, (status) => {
 })
 
 async function save() {
-  if (!form.title || !form.slug) {
-    toast.add({ severity: 'warn', summary: 'Title and slug are required', life: 3000 })
+  if (!form.title) {
+    toast.add({ severity: 'warn', summary: 'Title is required', life: 3000 })
     return
   }
   saving.value = true
-  const payload: any = { ...form }
-  if (!isNew) payload.id = Number(id)
+  const { slug: _slug, ...formData } = form
+  const payload: any = { ...formData }
+  if (!isNew) {
+    payload.id = Number(id)
+    payload.slug = form.slug
+  }
 
   const result = await saveArticle(payload)
   if (result.success) {
@@ -84,7 +83,7 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/news" class="text-slate-500 hover:text-primary-600"><i class="pi pi-arrow-left" /></NuxtLink>
       <h1 class="text-xl font-bold text-slate-900">{{ isNew ? 'New Article' : 'Edit Article' }}</h1>
@@ -97,9 +96,9 @@ async function save() {
           <InputText v-model="form.title" class="w-full" />
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug *</label>
-            <InputText v-model="form.slug" class="w-full" />
+          <div v-if="!isNew">
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug</label>
+            <p class="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">{{ form.slug }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Status</label>

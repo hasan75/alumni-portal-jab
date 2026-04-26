@@ -80,7 +80,7 @@ async function approve() {
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/members" class="text-slate-500 hover:text-primary-600">
         <i class="pi pi-arrow-left" />

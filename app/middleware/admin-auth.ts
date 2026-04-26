@@ -6,18 +6,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  const user = useSupabaseUser()
+  const supabase = useSupabaseClient()
 
-  if (!user.value) {
+  // Use getUser() instead of useSupabaseUser() — works reliably
+  // on both server and client immediately after sign-in
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user?.id) {
     return navigateTo('/admin/login')
   }
 
-  // Verify the user is in admin_users table
-  const supabase = useSupabaseClient()
   const { data } = await supabase
     .from('admin_users')
     .select('id, role, is_active')
-    .eq('id', user.value.id)
+    .eq('id', user.id)
     .single()
 
   if (!data || !data.is_active) {

@@ -58,7 +58,7 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-4">
+  <div class="space-y-4">
     <div>
       <h1 class="text-xl font-bold text-slate-900">App Settings</h1>
       <p class="text-slate-500 text-sm">Configure your alumni portal branding and contact information</p>

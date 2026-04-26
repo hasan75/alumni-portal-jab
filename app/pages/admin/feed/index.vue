@@ -49,7 +49,7 @@ function onPostRemoved(id: number) {
       <div v-for="i in 4" :key="i" class="bg-white border border-slate-200 rounded-xl h-32 animate-pulse" />
     </div>
 
-    <div v-else-if="posts.length > 0" class="space-y-4 max-w-2xl">
+    <div v-else-if="posts.length > 0" class="space-y-4">
       <FeedPost
         v-for="post in posts"
         :key="post.id"
