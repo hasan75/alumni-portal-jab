@@ -41,14 +41,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function updateProfile(updates: Partial<AlumniProfile>) {
     const supabase = useSupabaseClient()
-    const user = useSupabaseUser()
 
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const id = profile.value?.id
+    if (!id) return { success: false, error: 'Not authenticated' }
 
     const { data, error } = await supabase
       .from('alumni_profiles')
       .update(updates)
-      .eq('id', user.value.id)
+      .eq('id', id)
       .select()
       .single()
 

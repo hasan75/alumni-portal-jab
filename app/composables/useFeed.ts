@@ -1,8 +1,9 @@
 import type { FeedPost, FeedComment, ReactionType, PostScope } from '~/types/feed'
+import { useAuthStore } from '~/stores/auth'
 
 export function useFeed() {
   const supabase = useSupabaseClient()
-  const user = useSupabaseUser()
+  const authStore = useAuthStore()
 
   const posts = ref<FeedPost[]>([])
   const loading = ref(false)
@@ -11,6 +12,12 @@ export function useFeed() {
   const hasMore = ref(true)
 
   const PAGE_SIZE = 25
+
+  async function resolveUserId(): Promise<string | null> {
+    if (authStore.profile?.id) return authStore.profile.id
+    const { data: { user } } = await supabase.auth.getUser()
+    return user?.id ?? null
+  }
 
   async function fetchPosts(scope: PostScope = 'general', batchYear?: number, page: number = 1) {
     const isFirstPage = page === 1
@@ -57,12 +64,13 @@ export function useFeed() {
       }
 
       // Fetch my reactions for these posts
-      if (user.value && newPosts.length > 0) {
+      const currentUserId = authStore.profile?.id
+      if (currentUserId && newPosts.length > 0) {
         const postIds = newPosts.map(p => p.id)
         const { data: reactions } = await supabase
           .from('feed_reactions')
           .select('post_id, reaction_type')
-          .eq('alumni_id', user.value.id)
+          .eq('alumni_id', currentUserId)
           .in('post_id', postIds)
 
         if (reactions) {
@@ -81,12 +89,13 @@ export function useFeed() {
   }
 
   async function createPost(content: string, imageUrls: string[] = [], scope: PostScope = 'general', batchYear?: number) {
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const userId = await resolveUserId()
+    if (!userId) return { success: false, error: 'Not authenticated' }
 
     const { data, error: insertError } = await supabase
       .from('feed_posts')
       .insert({
-        author_id: user.value.id,
+        author_id: userId,
         content,
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         post_scope: scope,
@@ -108,7 +117,8 @@ export function useFeed() {
   }
 
   async function toggleReaction(postId: number, reactionType: ReactionType) {
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const userId = await resolveUserId()
+    if (!userId) return { success: false, error: 'Not authenticated' }
 
     const post = posts.value.find(p => p.id === postId)
     const existingReaction = post?.my_reaction
@@ -119,7 +129,7 @@ export function useFeed() {
         .from('feed_reactions')
         .delete()
         .eq('post_id', postId)
-        .eq('alumni_id', user.value.id)
+        .eq('alumni_id', userId)
 
       if (!deleteError && post) {
         post.my_reaction = null
@@ -133,7 +143,7 @@ export function useFeed() {
         .from('feed_reactions')
         .upsert({
           post_id: postId,
-          alumni_id: user.value.id,
+          alumni_id: userId,
           reaction_type: reactionType,
         }, { onConflict: 'post_id,alumni_id' })
 
@@ -162,13 +172,14 @@ export function useFeed() {
   }
 
   async function addComment(postId: number, content: string, parentCommentId?: number) {
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const userId = await resolveUserId()
+    if (!userId) return { success: false, error: 'Not authenticated' }
 
     const { data, error: insertError } = await supabase
       .from('feed_comments')
       .insert({
         post_id: postId,
-        author_id: user.value.id,
+        author_id: userId,
         content,
         parent_comment_id: parentCommentId || null,
       })
@@ -187,12 +198,12 @@ export function useFeed() {
   }
 
   async function removePost(postId: number, reason: string) {
-    const user = useSupabaseUser()
+    const userId = await resolveUserId()
     const { error: updateError } = await supabase
       .from('feed_posts')
       .update({
         status: 'removed',
-        removed_by: user.value?.id,
+        removed_by: userId,
         removal_reason: reason,
       })
       .eq('id', postId)
