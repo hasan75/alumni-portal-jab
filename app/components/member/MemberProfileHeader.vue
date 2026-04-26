@@ -12,8 +12,8 @@ defineProps<{
     <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
     <!-- Cover photo -->
-    <div class="h-36 relative overflow-hidden rounded-t-[18px]">
-      <div class="absolute inset-0 gradient-cover" />
+    <div class="h-52 relative overflow-hidden rounded-t-[18px]">
+      <div v-if="!profile.cover_photo_url" class="absolute inset-0 gradient-cover" />
       <img
         v-if="profile.cover_photo_url"
         :src="profile.cover_photo_url"

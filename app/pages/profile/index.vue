@@ -44,6 +44,8 @@ const form = reactive({
   current_job_title: '',
   current_company: '',
   industry: '',
+  avatar_url: null as string | null,
+  cover_photo_url: null as string | null,
   show_email: false,
   show_phone: false,
   show_dob: false,
@@ -65,6 +67,8 @@ watch(() => authStore.profile, (profile) => {
       current_job_title: profile.current_job_title || '',
       current_company: profile.current_company || '',
       industry: profile.industry || '',
+      avatar_url: profile.avatar_url || null,
+      cover_photo_url: profile.cover_photo_url || null,
       show_email: profile.show_email,
       show_phone: profile.show_phone,
       show_dob: profile.show_dob,
@@ -73,6 +77,17 @@ watch(() => authStore.profile, (profile) => {
 }, { immediate: true })
 
 const saving = ref(false)
+
+async function saveImageField(field: 'avatar_url' | 'cover_photo_url', value: string | null) {
+  form[field] = value
+  const result = await authStore.updateProfile({ [field]: value })
+  if (result.success) {
+    toast.add({ severity: 'success', summary: 'Photo updated', life: 2000 })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Failed to save photo', detail: result.error, life: 4000 })
+  }
+}
 
 async function saveProfile() {
   saving.value = true
@@ -99,6 +114,42 @@ async function saveProfile() {
     </div>
 
     <form class="space-y-5" @submit.prevent="saveProfile">
+      <!-- Profile Photos -->
+      <div class="glass-light relative overflow-hidden animate-fade-in-up delay-1">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+
+        <!-- Cover photo -->
+        <div class="relative">
+          <SharedImageUpload
+            :model-value="form.cover_photo_url"
+            bucket="covers"
+            :path="authStore.profile?.id || 'temp'"
+            aspect-ratio="3/1"
+            placeholder="Upload cover photo"
+            @update:model-value="(v) => saveImageField('cover_photo_url', v)"
+          />
+        </div>
+
+        <!-- Avatar + name row -->
+        <div class="relative px-6 pb-5 pt-4 flex items-end gap-4">
+          <div class="-mt-10 relative z-10">
+            <SharedImageUpload
+              :model-value="form.avatar_url"
+              bucket="avatars"
+              :path="authStore.profile?.id || 'temp'"
+              aspect-ratio="1/1"
+              compact
+              placeholder="Photo"
+              @update:model-value="(v) => saveImageField('avatar_url', v)"
+            />
+          </div>
+          <div class="pb-1">
+            <p class="text-sm font-semibold" style="color: #1e293b;">{{ form.full_name || 'Your Name' }}</p>
+            <p class="text-xs" style="color: #64748b;">Click images above to upload</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Basic Info -->
       <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-1">
         <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
