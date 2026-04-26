@@ -105,6 +105,17 @@ async function save() {
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Company *</label>
             <InputText v-model="form.company" class="w-full" />
           </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Company Logo</label>
+            <SharedImageUpload
+              v-model="form.company_logo_url"
+              bucket="jobs"
+              :path="isNew ? 'new' : id"
+              aspect-ratio="1/1"
+              compact
+              placeholder="Logo"
+            />
+          </div>
           <div v-if="!isNew">
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug</label>
             <p class="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">{{ form.slug }}</p>

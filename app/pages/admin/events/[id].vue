@@ -157,8 +157,14 @@ async function save() {
           <InputText v-model="form.online_meeting_url" class="w-full" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Cover Image URL</label>
-          <InputText v-model="form.cover_image_url" class="w-full" />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Cover Image</label>
+          <SharedImageUpload
+            v-model="form.cover_image_url"
+            bucket="events"
+            :path="isNew ? 'new' : id"
+            aspect-ratio="16/9"
+            placeholder="Drop an event cover image here or click to browse"
+          />
         </div>
         <div class="flex items-center gap-3">
           <ToggleSwitch v-model="form.rsvp_enabled" />

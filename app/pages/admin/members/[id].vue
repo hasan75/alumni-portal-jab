@@ -50,6 +50,8 @@ const form = reactive({
   current_job_title: '',
   current_company: '',
   bio: '',
+  avatar_url: '' as string | null,
+  cover_photo_url: '' as string | null,
   status: 'pending' as string,
   is_verified: false,
 })
@@ -109,7 +111,31 @@ async function approve() {
       </Message>
 
       <form class="space-y-4" @submit.prevent="save">
-        <div class="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Avatar</label>
+              <SharedImageUpload
+                v-model="form.avatar_url"
+                bucket="avatars"
+                :path="id"
+                aspect-ratio="1/1"
+                compact
+                placeholder="Avatar"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Cover Photo</label>
+              <SharedImageUpload
+                v-model="form.cover_photo_url"
+                bucket="covers"
+                :path="id"
+                aspect-ratio="16/9"
+                placeholder="Drop a cover photo here"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
             <InputText v-model="form.full_name" class="w-full" />
@@ -168,6 +194,7 @@ async function approve() {
               option-value="value"
               class="w-full"
             />
+          </div>
           </div>
         </div>
 

@@ -122,8 +122,14 @@ async function save() {
           <Textarea v-model="form.content" :rows="10" class="w-full font-mono text-xs" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Featured Image URL</label>
-          <InputText v-model="form.featured_image_url" class="w-full" />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Featured Image</label>
+          <SharedImageUpload
+            v-model="form.featured_image_url"
+            bucket="news"
+            :path="isNew ? 'new' : id"
+            aspect-ratio="16/9"
+            placeholder="Drop a featured image here or click to browse"
+          />
         </div>
         <div class="flex gap-6">
           <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
