@@ -4,6 +4,8 @@ import { formatDate } from '~/utils/formatters'
 const route = useRoute()
 const slug = route.params.slug as string
 
+definePageMeta({ layout: 'default' })
+
 const { fetchBySlug } = useNews()
 const { data: article, pending } = await useAsyncData(`article-${slug}`, () => fetchBySlug(slug))
 
@@ -14,7 +16,11 @@ if (!article.value && !pending.value) {
 useSeoMeta({
   title: computed(() => article.value?.meta_title || article.value?.title || 'Article'),
   description: computed(() => article.value?.meta_description || article.value?.excerpt || ''),
+  ogTitle: computed(() => article.value?.meta_title || article.value?.title || 'Article'),
+  ogDescription: computed(() => article.value?.meta_description || article.value?.excerpt || ''),
   ogImage: computed(() => article.value?.og_image_url || article.value?.featured_image_url || ''),
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
 })
 </script>
 

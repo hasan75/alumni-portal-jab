@@ -3,9 +3,15 @@ import ArticleCard from '~/components/news/ArticleCard.vue'
 import EventCard from '~/components/events/EventCard.vue'
 import JobCard from '~/components/jobs/JobCard.vue'
 
+definePageMeta({ layout: 'default' })
+
 useSeoMeta({
   title: 'Alumni Portal — Stay Connected',
   description: 'The official alumni network. Connect with batchmates, discover events, news, and opportunities.',
+  ogTitle: 'Alumni Portal — Stay Connected',
+  ogDescription: 'The official alumni network. Connect with batchmates, discover events, news, and opportunities.',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
 })
 
 const { fetchArticles } = useNews()

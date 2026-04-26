@@ -4,6 +4,8 @@ node_modules/
 # Nuxt build/generate output
 .nuxt/
 .output/
+.output
+.nuxt
 dist/
 
 # Environment

@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import ArticleCard from '~/components/news/ArticleCard.vue'
 
-useSeoMeta({ title: 'News | Alumni Portal', description: 'Alumni news, achievements, and announcements.' })
+definePageMeta({ layout: 'default' })
+
+useSeoMeta({
+  title: 'News | Alumni Portal',
+  description: 'Alumni news, achievements, and announcements.',
+  ogTitle: 'News | Alumni Portal',
+  ogDescription: 'Alumni news, achievements, and announcements.',
+  twitterCard: 'summary',
+})
 
 const { fetchArticles, fetchCategories } = useNews()
 
