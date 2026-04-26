@@ -5,7 +5,6 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { slugify } from '~/utils/formatters'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -67,29 +66,29 @@ onMounted(async () => {
   }
 })
 
-watch(() => form.title, (title) => {
-  if (isNew) form.slug = slugify(title)
-})
-
 async function save() {
   if (!form.title || !form.start_datetime) {
     toast.add({ severity: 'warn', summary: 'Title and start date are required', life: 3000 })
     return
   }
   saving.value = true
+  const { slug: _slug, ...formData } = form
   const payload: any = {
-    ...form,
+    ...formData,
     start_datetime: form.start_datetime?.toISOString(),
     end_datetime: form.end_datetime?.toISOString() || null,
     rsvp_deadline: form.rsvp_deadline?.toISOString() || null,
     created_by: user.value?.id,
   }
-  if (!isNew) payload.id = Number(id)
+  if (!isNew) {
+    payload.id = Number(id)
+    payload.slug = form.slug
+  }
 
   const result = await saveEvent(payload)
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Event saved!', life: 2000 })
-    if (isNew) navigateTo(`/admin/events/${result.data.id}`)
+    await navigateTo('/admin/events')
   }
   else {
     toast.add({ severity: 'error', summary: 'Save failed', detail: result.error, life: 3000 })
@@ -99,7 +98,7 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/events" class="text-slate-500 hover:text-primary-600"><i class="pi pi-arrow-left" /></NuxtLink>
       <h1 class="text-xl font-bold text-slate-900">{{ isNew ? 'New Event' : 'Edit Event' }}</h1>
@@ -111,9 +110,9 @@ async function save() {
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Title *</label>
           <InputText v-model="form.title" class="w-full" />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug *</label>
-          <InputText v-model="form.slug" class="w-full" />
+        <div v-if="!isNew">
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug</label>
+          <p class="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">{{ form.slug }}</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>

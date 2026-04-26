@@ -48,82 +48,74 @@ watch(selectedBatch, () => {
 
 <template>
   <div>
-    <!-- Hero header -->
-    <section class="relative overflow-hidden py-14 px-4 gradient-brand-deeper">
-      <div class="absolute top-1/2 right-1/4 w-64 h-64 rounded-full opacity-15 blur-3xl animate-float delay-1 orb-primary" />
-      <div class="relative max-w-6xl mx-auto">
-        <div class="animate-fade-in-up mb-5">
-          <p class="text-xs font-semibold tracking-widest uppercase text-white/50 mb-2">Connect</p>
-          <h1 class="text-4xl font-semibold tracking-tight text-white">Alumni Directory</h1>
-          <p class="text-white/50 text-sm mt-1.5">
-            {{ user ? 'Browse all active alumni' : 'Sign in to access full profiles and contact details' }}
-          </p>
-        </div>
+    <!-- Section header -->
+    <div class="mb-6 animate-fade-in-up">
+      <p class="text-xs font-semibold tracking-widest uppercase text-primary-600 mb-2">Connect</p>
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Alumni Directory</h1>
+      <p class="text-slate-500 text-sm mt-1.5">
+        {{ user ? 'Browse all active alumni' : 'Sign in to access full profiles and contact details' }}
+      </p>
+    </div>
 
-        <div class="flex gap-3 flex-wrap animate-fade-in-up delay-1">
-          <div class="flex-1 min-w-64 relative">
-            <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm z-10" />
-            <InputText
-              v-model="search"
-              placeholder="Search by name or company..."
-              class="w-full pl-9"
-              @input="onSearch"
-            />
-          </div>
-          <Select
-            v-model="selectedBatch"
-            :options="batches"
-            option-label="label"
-            option-value="value"
-            placeholder="All Batches"
-            class="w-44"
-          />
-        </div>
-      </div>
-    </section>
-
-    <div class="max-w-6xl mx-auto px-4 py-10">
-      <!-- Skeletons -->
-      <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div
-          v-for="i in 8" :key="i"
-          class="rounded-[20px] h-28 animate-pulse"
-          style="background:rgba(30,58,138,0.08);border:1px solid rgba(30,58,138,0.12);"
+    <!-- Filters -->
+    <div class="flex gap-3 flex-wrap mb-8 animate-fade-in-up delay-1">
+      <div class="flex-1 min-w-64 relative">
+        <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10" />
+        <InputText
+          v-model="search"
+          placeholder="Search by name or company..."
+          class="w-full search-input"
+          @input="onSearch"
         />
       </div>
+      <Select
+        v-model="selectedBatch"
+        :options="batches"
+        option-label="label"
+        option-value="value"
+        placeholder="All Batches"
+        class="w-44"
+      />
+    </div>
 
-      <div v-else-if="members && members.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <MemberCard v-for="member in members" :key="member.id" :member="member" />
-      </div>
+    <!-- Skeletons -->
+    <div v-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div
+        v-for="i in 8" :key="i"
+        class="rounded-[20px] h-28 animate-pulse bg-white/40 border border-slate-200"
+      />
+    </div>
 
-      <div v-else class="glass relative overflow-hidden text-center py-20 px-8 max-w-md mx-auto animate-scale-in" style="background:linear-gradient(135deg,rgba(30,58,138,0.10),rgba(29,78,216,0.10));">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-        <div class="relative">
-          <div class="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center animate-float" style="background:rgba(30,58,138,0.12);border:1px solid rgba(30,58,138,0.25);">
-            <i class="pi pi-users text-3xl text-blue-400" />
-          </div>
-          <h3 class="text-lg font-semibold text-slate-800 mb-2">No alumni found</h3>
-          <p class="text-slate-500 text-sm">Try a different search or batch filter.</p>
+    <div v-else-if="members && members.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <MemberCard v-for="member in members" :key="member.id" :member="member" />
+    </div>
+
+    <div v-else class="glass-light relative overflow-hidden text-center py-20 px-8 max-w-md mx-auto animate-scale-in">
+      <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+      <div class="relative">
+        <div class="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center animate-float bg-primary-50 border border-primary-200">
+          <i class="pi pi-users text-3xl text-primary-400" />
         </div>
+        <h3 class="text-lg font-semibold text-slate-800 mb-2">No alumni found</h3>
+        <p class="text-slate-500 text-sm">Try a different search or batch filter.</p>
       </div>
+    </div>
 
-      <!-- Guest prompt -->
-      <div v-if="!user" class="mt-8 glass relative overflow-hidden p-8 text-center animate-fade-in-up" style="background:linear-gradient(135deg,rgba(29,78,216,0.12),rgba(59,130,246,0.12));">
-        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <div class="relative">
-          <h3 class="font-semibold text-slate-800 mb-2">Want to see full profiles?</h3>
-          <p class="text-slate-500 text-sm mb-5">Sign in or register to access complete alumni profiles with contact information.</p>
-          <div class="flex gap-3 justify-center">
-            <NuxtLink to="/login" class="px-5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
-              Sign In
-            </NuxtLink>
-            <NuxtLink to="/register" class="px-5 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors shadow-md shadow-primary-600/30">
-              Register
-            </NuxtLink>
-          </div>
+    <!-- Guest prompt -->
+    <div v-if="!user" class="mt-8 glass-light relative overflow-hidden p-8 text-center animate-fade-in-up">
+      <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+      <div class="relative">
+        <h3 class="font-semibold text-slate-800 mb-2">Want to see full profiles?</h3>
+        <p class="text-slate-500 text-sm mb-5">Sign in or register to access complete alumni profiles with contact information.</p>
+        <div class="flex gap-3 justify-center">
+          <NuxtLink to="/login" class="px-5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+            Sign In
+          </NuxtLink>
+          <NuxtLink to="/register" class="px-5 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-colors shadow-md shadow-primary-600/30">
+            Register
+          </NuxtLink>
         </div>
       </div>
     </div>
   </div>
 </template>
-

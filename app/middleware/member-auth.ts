@@ -2,18 +2,18 @@
 // Apply via: definePageMeta({ middleware: 'member-auth' })
 
 export default defineNuxtRouteMiddleware(async () => {
-  const user = useSupabaseUser()
+  const supabase = useSupabaseClient()
 
-  if (!user.value) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user?.id) {
     return navigateTo('/login')
   }
 
-  // Check alumni profile status
-  const supabase = useSupabaseClient()
   const { data } = await supabase
     .from('alumni_profiles')
     .select('status')
-    .eq('id', user.value.id)
+    .eq('id', user.id)
     .single()
 
   if (!data) {

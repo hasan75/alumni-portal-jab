@@ -4,10 +4,10 @@ defineProps<{
 }>()
 
 const statusConfig = {
-  pending: { label: 'Pending', style: 'background:rgba(251,191,36,0.2);color:#fcd34d;border:1px solid rgba(251,191,36,0.35);' },
-  active: { label: 'Active', style: 'background:rgba(52,199,89,0.2);color:#86efac;border:1px solid rgba(52,199,89,0.35);' },
-  suspended: { label: 'Suspended', style: 'background:rgba(249,115,22,0.2);color:#fdba74;border:1px solid rgba(249,115,22,0.35);' },
-  rejected: { label: 'Rejected', style: 'background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.35);' },
+  pending: { label: 'Pending', style: 'background:rgba(251,191,36,0.15);color:#92400e;border:1px solid rgba(251,191,36,0.4);' },
+  active: { label: 'Active', style: 'background:rgba(52,199,89,0.15);color:#166534;border:1px solid rgba(52,199,89,0.4);' },
+  suspended: { label: 'Suspended', style: 'background:rgba(249,115,22,0.15);color:#9a3412;border:1px solid rgba(249,115,22,0.4);' },
+  rejected: { label: 'Rejected', style: 'background:rgba(239,68,68,0.15);color:#991b1b;border:1px solid rgba(239,68,68,0.4);' },
 }
 </script>
 

@@ -4,7 +4,6 @@ import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { slugify } from '~/utils/formatters'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -63,23 +62,23 @@ onMounted(async () => {
   }
 })
 
-watch(() => form.title, (title) => {
-  if (isNew) form.slug = slugify(`${title}-${form.company}`)
-})
-
 async function save() {
   if (!form.title || !form.company) {
     toast.add({ severity: 'warn', summary: 'Title and company are required', life: 3000 })
     return
   }
   saving.value = true
-  const payload: any = { ...form, posted_by: user.value?.id }
-  if (!isNew) payload.id = Number(id)
+  const { slug: _slug, ...formData } = form
+  const payload: any = { ...formData, posted_by: user.value?.id }
+  if (!isNew) {
+    payload.id = Number(id)
+    payload.slug = form.slug
+  }
 
   const result = await saveJob(payload)
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Job saved!', life: 2000 })
-    if (isNew) navigateTo(`/admin/jobs/${result.data.id}`)
+    await navigateTo('/admin/jobs')
   }
   else {
     toast.add({ severity: 'error', summary: 'Save failed', detail: result.error, life: 3000 })
@@ -89,7 +88,7 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-4">
+  <div class="space-y-4">
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/jobs" class="text-slate-500 hover:text-primary-600"><i class="pi pi-arrow-left" /></NuxtLink>
       <h1 class="text-xl font-bold text-slate-900">{{ isNew ? 'New Job' : 'Edit Job' }}</h1>
@@ -106,9 +105,9 @@ async function save() {
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Company *</label>
             <InputText v-model="form.company" class="w-full" />
           </div>
-          <div>
+          <div v-if="!isNew">
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug</label>
-            <InputText v-model="form.slug" class="w-full" />
+            <p class="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">{{ form.slug }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Job Type</label>

@@ -9,6 +9,7 @@ useSeoMeta({ title: 'Batches | Admin', robots: 'noindex' })
 
 const supabase = useSupabaseClient()
 const toast = useToast()
+const confirm = useConfirm()
 
 const batches = ref<any[]>([])
 const loading = ref(false)
@@ -45,8 +46,17 @@ async function addBatch() {
 }
 
 async function toggleActive(id: number, current: boolean) {
-  await supabase.from('batches').update({ is_active: !current }).eq('id', id)
-  await load()
+  const action = current ? 'Deactivate' : 'Activate'
+  confirm.require({
+    message: `${action} this batch?`,
+    header: `Confirm ${action}`,
+    icon: current ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary',
+    accept: async () => {
+      await supabase.from('batches').update({ is_active: !current }).eq('id', id)
+      await load()
+    },
+  })
 }
 </script>
 
@@ -72,8 +82,16 @@ async function toggleActive(id: number, current: boolean) {
       </div>
     </div>
 
-    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-      <DataTable :value="batches" :loading="loading" data-key="id" class="text-sm">
+    <div v-if="!loading && batches.length === 0" class="bg-white border border-slate-200 rounded-xl text-center py-16 px-8">
+      <div class="w-16 h-16 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+        <i class="pi pi-calendar text-2xl text-slate-300" />
+      </div>
+      <h3 class="text-lg font-semibold text-slate-800 mb-1">No batches found</h3>
+      <p class="text-sm text-slate-500">Add your first batch using the form above.</p>
+    </div>
+
+    <div v-else class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <DataTable :value="batches" :loading="loading" data-key="id" class="text-sm" :paginator="batches.length > 10" :rows="25" :rows-per-page-options="[10, 20, 25, 30]">
         <Column field="year" header="Year" />
         <Column field="label" header="Label" />
         <Column field="member_count" header="Members" />

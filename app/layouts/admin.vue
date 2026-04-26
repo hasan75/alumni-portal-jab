@@ -70,13 +70,41 @@ function toggleUserMenu(event: Event) {
   userMenu.value.toggle(event)
 }
 
-function isActive(path: string) {
-  if (route.path === path) return true
-  if (route.path.startsWith(`${path}/`)) {
-    const allNavPaths = navSections.value.flatMap(s => s.items.map(i => i.to))
-    const hasMoreSpecificMatch = allNavPaths.some(p => p !== path && route.path.startsWith(p))
+function isActive(navTo: string) {
+  const [navPath, navQuery] = navTo.split('?')
+  const currentPath = route.path
+  const currentQuery = route.query
+
+  if (navQuery) {
+    if (currentPath !== navPath) return false
+    const params = new URLSearchParams(navQuery)
+    for (const [key, value] of params.entries()) {
+      if (currentQuery[key] !== value) return false
+    }
+    return true
+  }
+
+  if (currentPath === navPath) {
+    const allNavItems = navSections.value.flatMap(s => s.items)
+    const hasQuerySibling = allNavItems.some((item) => {
+      if (!item.to.includes('?')) return false
+      const [sibPath, sibQuery] = item.to.split('?')
+      if (sibPath !== navPath) return false
+      const params = new URLSearchParams(sibQuery)
+      for (const [key, value] of params.entries()) {
+        if (currentQuery[key] === value) return true
+      }
+      return false
+    })
+    return !hasQuerySibling
+  }
+
+  if (currentPath.startsWith(`${navPath}/`)) {
+    const allNavPaths = navSections.value.flatMap(s => s.items.map(i => i.to.split('?')[0]))
+    const hasMoreSpecificMatch = allNavPaths.some(p => p !== navPath && currentPath.startsWith(p))
     return !hasMoreSpecificMatch
   }
+
   return false
 }
 
@@ -129,7 +157,7 @@ onMounted(async () => {
             :class="[
               isActive('/admin/dashboard')
                 ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/30'
-                : 'text-slate-600 hover:bg-white/60',
+                : 'text-slate-600 hover:bg-slate-100/80',
             ]"
             :title="sidebarCollapsed ? 'Dashboard' : undefined"
           >
@@ -154,7 +182,7 @@ onMounted(async () => {
               :class="[
                 isActive(item.to)
                   ? 'bg-primary-600 text-white font-medium shadow-sm shadow-primary-600/30'
-                  : 'text-slate-600 hover:bg-white/60',
+                  : 'text-slate-600 hover:bg-slate-100/80',
               ]"
               :title="sidebarCollapsed ? item.label : undefined"
             >
@@ -175,14 +203,14 @@ onMounted(async () => {
           <NuxtLink
             to="/"
             target="_blank"
-            class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-white/60 transition-all duration-200"
+            class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-100/80 transition-all duration-200"
             :title="sidebarCollapsed ? 'View Site' : undefined"
           >
             <i class="pi pi-external-link" />
             <span v-if="!sidebarCollapsed">View Site</span>
           </NuxtLink>
           <button
-            class="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-white/60 transition-all duration-200"
+            class="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-100/80 transition-all duration-200"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
             <i :class="sidebarCollapsed ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'" />

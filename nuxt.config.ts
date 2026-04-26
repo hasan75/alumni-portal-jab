@@ -67,6 +67,7 @@ export default defineNuxtConfig({
     options: {
       theme: {
         preset: AlumniPreset,
+        options: { darkModeSelector: false },
       },
     },
     components: {

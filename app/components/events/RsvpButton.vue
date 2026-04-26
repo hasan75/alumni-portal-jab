@@ -26,7 +26,6 @@ async function handleRsvp(status: RsvpStatus) {
   loading.value = true
 
   if (props.currentRsvp?.status === status) {
-    // Toggle off
     const result = await removeRsvp(props.eventId)
     if (result.success) {
       emit('change', null)
@@ -54,20 +53,18 @@ async function handleRsvp(status: RsvpStatus) {
         { status: 'not_going' as RsvpStatus, label: 'Can\'t Go', icon: 'pi pi-times' },
       ]"
       :key="option.status"
-      class="relative overflow-hidden flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
-      :style="currentRsvp?.status === option.status
-        ? 'background:rgba(29,78,216,0.8);border:1px solid rgba(147,197,253,0.4);color:white;box-shadow:0 2px 0 rgba(255,255,255,0.2) inset,0 4px 16px rgba(29,78,216,0.3);'
-        : 'background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.75);'"
+      class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+      :class="currentRsvp?.status === option.status
+        ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/30 border border-primary-500'
+        : 'bg-white/70 text-slate-600 border border-slate-200 hover:bg-white hover:text-slate-900'"
       :disabled="loading"
       @click="handleRsvp(option.status)"
     >
-      <span v-if="currentRsvp?.status === option.status" class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-white/15 to-transparent" />
       <i :class="option.icon" class="text-xs" />
       {{ option.label }}
     </button>
   </div>
-  <p v-else-if="isExpired" class="text-sm text-white/40">
+  <p v-else-if="isExpired" class="text-sm text-slate-400">
     RSVP deadline has passed
   </p>
 </template>
-

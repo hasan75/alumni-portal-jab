@@ -56,7 +56,7 @@ export function useEvents() {
   async function fetchAllForAdmin(filters: EventFilters = {}) {
     loading.value = true
     const page = filters.page || 1
-    const perPage = filters.perPage || 20
+    const perPage = filters.perPage || 25
     const from = (page - 1) * perPage
     const to = from + perPage - 1
 
