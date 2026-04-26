@@ -6,13 +6,15 @@ definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 useSeoMeta({ title: 'Events | Alumni Portal', description: 'Upcoming and past alumni events.' })
 
-const { fetchEvents } = useEvents()
+const { fetchEvents, totalCount } = useEvents()
 
 const filter = ref<'upcoming' | 'all'>('upcoming')
 const currentPage = ref(1)
+const pageSize = ref(12)
+const pageSizeOptions = [12, 24, 36, 48]
 
 const { data: events, refresh, pending } = await useAsyncData('events', () =>
-  fetchEvents({ upcoming: filter.value === 'upcoming', page: currentPage.value }),
+  fetchEvents({ upcoming: filter.value === 'upcoming', page: currentPage.value, perPage: pageSize.value }),
 )
 
 watch(filter, () => {
@@ -57,8 +59,39 @@ watch(filter, () => {
       <EventCard v-for="event in events" :key="event.id" :event="event" />
     </div>
 
+    <!-- Pagination -->
+    <div v-if="!pending && events && events.length > 0 && totalCount > pageSize" class="flex items-center justify-between pt-6 flex-wrap gap-3 animate-fade-in-up">
+      <p class="text-sm text-slate-500">
+        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }}
+      </p>
+      <div class="flex items-center gap-2">
+        <Select
+          v-model="pageSize"
+          :options="pageSizeOptions.map(v => ({ label: String(v), value: v }))"
+          option-label="label"
+          option-value="value"
+          class="w-20"
+          @change="currentPage = 1; refresh()"
+        />
+        <button
+          class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:scale-95 bg-white/70 text-slate-600 border border-slate-200 hover:bg-white disabled:opacity-40 disabled:pointer-events-none"
+          :disabled="currentPage <= 1"
+          @click="currentPage--; refresh()"
+        >
+          <i class="pi pi-chevron-left text-xs mr-1" />Previous
+        </button>
+        <button
+          class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:scale-95 bg-white/70 text-slate-600 border border-slate-200 hover:bg-white disabled:opacity-40 disabled:pointer-events-none"
+          :disabled="currentPage * pageSize >= totalCount"
+          @click="currentPage++; refresh()"
+        >
+          Next<i class="pi pi-chevron-right text-xs ml-1" />
+        </button>
+      </div>
+    </div>
+
     <!-- Empty state -->
-    <div v-else class="glass-light relative overflow-hidden text-center py-20 px-8 max-w-md mx-auto animate-scale-in">
+    <div v-if="!pending && (!events || events.length === 0)" class="glass-light relative overflow-hidden text-center py-20 px-8 max-w-md mx-auto animate-scale-in">
       <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
       <div class="relative">
         <div class="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center animate-float bg-primary-50 border border-primary-200">
