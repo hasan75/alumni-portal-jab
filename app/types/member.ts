@@ -1,3 +1,5 @@
+export type CurrentStatus = 'studying' | 'working' | 'business' | 'studying_and_working' | 'other'
+
 export interface AlumniProfile {
   id: string
   email: string
@@ -15,9 +17,12 @@ export interface AlumniProfile {
   phone: string | null
   city: string | null
   country: string | null
-  current_job_title: string | null
-  current_company: string | null
-  industry: string | null
+  current_status: CurrentStatus | null
+  featured_education_summary: string | null
+  featured_work_summary: string | null
+  linkedin_url: string | null
+  facebook_url: string | null
+  portfolio_url: string | null
   bio: string | null
   skills: string[] | null
   show_email: boolean
@@ -40,7 +45,9 @@ export interface AlumniEducation {
   start_year: number | null
   end_year: number | null
   is_current: boolean
+  is_featured: boolean
   description: string | null
+  url: string | null
   created_at: string
 }
 
@@ -53,8 +60,34 @@ export interface AlumniWorkExperience {
   start_date: string | null
   end_date: string | null
   is_current: boolean
+  is_featured: boolean
   description: string | null
+  url: string | null
+  industry: string | null
   created_at: string
+}
+
+export interface SocialPlatform {
+  slug: string
+  name: string
+  icon: string
+  base_url: string | null
+  color: string | null
+  placeholder: string | null
+  is_active: boolean
+  sort_order: number
+}
+
+export interface SocialLink {
+  id: number
+  entity_type: string
+  entity_id: string
+  platform_slug: string
+  url: string
+  username: string | null
+  is_verified: boolean
+  is_primary: boolean
+  sort_order: number
 }
 
 export interface Batch {

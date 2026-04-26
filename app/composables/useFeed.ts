@@ -33,7 +33,7 @@ export function useFeed() {
       .from('feed_posts')
       .select(`
         *,
-        author:alumni_profiles!author_id(full_name, display_name, avatar_url, batch_year, current_job_title, current_company)
+        author:alumni_profiles!author_id(full_name, display_name, avatar_url, batch_year, featured_work_summary)
       `)
       .eq('status', 'published')
       .eq('post_scope', scope)
@@ -103,7 +103,7 @@ export function useFeed() {
       })
       .select(`
         *,
-        author:alumni_profiles!author_id(full_name, display_name, avatar_url, batch_year, current_job_title, current_company)
+        author:alumni_profiles!author_id(full_name, display_name, avatar_url, batch_year, featured_work_summary)
       `)
       .single()
 

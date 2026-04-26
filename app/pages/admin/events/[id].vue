@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { extractStorageImagesFromHtml, deleteOrphanedImages } from '~/utils/htmlContent'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -21,6 +21,7 @@ useSeoMeta({ title: isNew ? 'New Event | Admin' : 'Edit Event | Admin', robots: 
 
 const batches = ref<{ label: string, value: number | null }[]>([])
 const saving = ref(false)
+const initialDescImages = ref<string[]>([])
 
 const form = reactive({
   title: '',
@@ -62,6 +63,7 @@ onMounted(async () => {
         end_datetime: data.end_datetime ? new Date(data.end_datetime) : null,
         rsvp_deadline: data.rsvp_deadline ? new Date(data.rsvp_deadline) : null,
       })
+      initialDescImages.value = extractStorageImagesFromHtml(data.description || '', 'events')
     }
   }
 })
@@ -87,6 +89,8 @@ async function save() {
 
   const result = await saveEvent(payload)
   if (result.success) {
+    const currentImages = extractStorageImagesFromHtml(form.description, 'events')
+    await deleteOrphanedImages(initialDescImages.value, currentImages, 'events')
     toast.add({ severity: 'success', summary: 'Event saved!', life: 2000 })
     await navigateTo('/admin/events')
   }
@@ -116,7 +120,15 @@ async function save() {
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
-          <Textarea v-model="form.description" :rows="3" class="w-full" />
+          <SharedRichTextEditor
+            id="event-description"
+            v-model="form.description"
+            :height="200"
+            :allow-images="true"
+            bucket="events"
+            :storage-path="isNew ? 'new' : id"
+            placeholder="Describe the event..."
+          />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>

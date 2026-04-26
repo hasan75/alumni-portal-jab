@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import type { AlumniProfile } from '~/types/member'
 
-defineProps<{
+const props = defineProps<{
   profile: AlumniProfile
   isOwnProfile?: boolean
 }>()
+
+const subtitle = computed(() => {
+  const p = props.profile
+  if (p.featured_work_summary) return p.featured_work_summary
+  if (p.featured_education_summary) return p.featured_education_summary
+  return null
+})
 </script>
 
 <template>
@@ -50,9 +57,8 @@ defineProps<{
       <h1 class="text-xl font-semibold text-slate-900 tracking-tight">
         {{ profile.display_name || profile.full_name }}
       </h1>
-      <p v-if="profile.current_job_title" class="text-slate-500 mt-0.5 text-sm">
-        {{ profile.current_job_title }}
-        <span v-if="profile.current_company"> at {{ profile.current_company }}</span>
+      <p v-if="subtitle" class="text-slate-500 mt-0.5 text-sm">
+        {{ subtitle }}
       </p>
 
       <div class="flex flex-wrap gap-2.5 mt-4">

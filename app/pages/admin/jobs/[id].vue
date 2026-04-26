@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { extractStorageImagesFromHtml, deleteOrphanedImages } from '~/utils/htmlContent'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -19,6 +19,8 @@ useSeoMeta({ title: isNew ? 'New Job | Admin' : 'Edit Job | Admin', robots: 'noi
 
 const categories = ref<any[]>([])
 const saving = ref(false)
+const initialDescImages = ref<string[]>([])
+const initialReqImages = ref<string[]>([])
 
 const form = reactive({
   title: '',
@@ -59,7 +61,11 @@ onMounted(async () => {
   if (!isNew) {
     const supabase = useSupabaseClient()
     const { data } = await supabase.from('jobs').select('*').eq('id', id).single()
-    if (data) Object.assign(form, data)
+    if (data) {
+      Object.assign(form, data)
+      initialDescImages.value = extractStorageImagesFromHtml(data.description || '', 'jobs')
+      initialReqImages.value = extractStorageImagesFromHtml(data.requirements || '', 'jobs')
+    }
   }
 })
 
@@ -78,6 +84,10 @@ async function save() {
 
   const result = await saveJob(payload)
   if (result.success) {
+    const currentDescImages = extractStorageImagesFromHtml(form.description, 'jobs')
+    const currentReqImages = extractStorageImagesFromHtml(form.requirements, 'jobs')
+    await deleteOrphanedImages(initialDescImages.value, currentDescImages, 'jobs')
+    await deleteOrphanedImages(initialReqImages.value, currentReqImages, 'jobs')
     toast.add({ severity: 'success', summary: 'Job saved!', life: 2000 })
     await navigateTo('/admin/jobs')
   }
@@ -167,12 +177,28 @@ async function save() {
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Description (HTML)</label>
-          <Textarea v-model="form.description" :rows="6" class="w-full font-mono text-xs" />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+          <SharedRichTextEditor
+            id="job-description"
+            v-model="form.description"
+            :height="250"
+            :allow-images="false"
+            bucket="jobs"
+            :storage-path="isNew ? 'new' : id"
+            placeholder="Describe the role and responsibilities..."
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Requirements (HTML)</label>
-          <Textarea v-model="form.requirements" :rows="4" class="w-full font-mono text-xs" />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Requirements</label>
+          <SharedRichTextEditor
+            id="job-requirements"
+            v-model="form.requirements"
+            :height="200"
+            :allow-images="false"
+            bucket="jobs"
+            :storage-path="isNew ? 'new' : id"
+            placeholder="List the requirements and qualifications..."
+          />
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Job Cover Image</label>

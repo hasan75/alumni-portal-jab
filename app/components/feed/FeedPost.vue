@@ -103,9 +103,8 @@ async function handleHide() {
           >
             {{ post.author?.display_name || post.author?.full_name }}
           </NuxtLink>
-          <p v-if="post.author?.current_job_title" class="text-xs text-slate-500 mt-0.5">
-            {{ post.author.current_job_title }}
-            <span v-if="post.author.current_company"> · {{ post.author.current_company }}</span>
+          <p v-if="post.author?.featured_work_summary" class="text-xs text-slate-500 mt-0.5">
+            {{ post.author.featured_work_summary }}
           </p>
           <p class="text-xs text-slate-400 mt-0.5">{{ formatRelativeTime(post.created_at) }}</p>
         </div>

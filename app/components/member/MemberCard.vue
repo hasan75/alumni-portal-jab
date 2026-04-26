@@ -1,10 +1,23 @@
 <script setup lang="ts">
 import type { AlumniProfile } from '~/types/member'
 
-defineProps<{
+const props = defineProps<{
   member: AlumniProfile
   compact?: boolean
 }>()
+
+const workSubtitle = computed(() => {
+  return props.member.featured_work_summary || null
+})
+
+const eduSubtitle = computed(() => {
+  return props.member.featured_education_summary || null
+})
+
+const hasSocialLinks = computed(() => {
+  const m = props.member
+  return m.linkedin_url || m.facebook_url || m.portfolio_url
+})
 </script>
 
 <template>
@@ -39,12 +52,15 @@ defineProps<{
         {{ member.display_name || member.full_name }}
       </h3>
 
-      <!-- Job -->
-      <p v-if="member.current_job_title" class="text-xs text-slate-500 mt-0.5 truncate">
-        {{ member.current_job_title }}
+      <!-- Featured work -->
+      <p v-if="workSubtitle" class="text-xs text-slate-500 mt-0.5 truncate">
+        {{ workSubtitle }}
       </p>
-      <p v-if="member.current_company" class="text-xs text-slate-400 truncate">
-        {{ member.current_company }}
+
+      <!-- Featured education -->
+      <p v-if="eduSubtitle" class="text-xs text-slate-400 mt-0.5 truncate flex items-center justify-center gap-1">
+        <i class="pi pi-graduation-cap text-[9px]" />
+        {{ eduSubtitle }}
       </p>
 
       <!-- Badges -->
@@ -62,6 +78,40 @@ defineProps<{
           <i class="pi pi-map-marker text-[9px]" />
           {{ [member.city, member.country].filter(Boolean).join(', ') }}
         </span>
+      </div>
+
+      <!-- Social links -->
+      <div v-if="hasSocialLinks" class="flex items-center justify-center gap-2 mt-3">
+        <a
+          v-if="member.portfolio_url"
+          :href="member.portfolio_url"
+          target="_blank"
+          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+          title="Portfolio"
+          @click.stop
+        >
+          <i class="pi pi-globe text-[11px]" />
+        </a>
+        <a
+          v-if="member.linkedin_url"
+          :href="member.linkedin_url"
+          target="_blank"
+          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#0A66C2] hover:bg-blue-50 transition-all"
+          title="LinkedIn"
+          @click.stop
+        >
+          <i class="pi pi-linkedin text-[11px]" />
+        </a>
+        <a
+          v-if="member.facebook_url"
+          :href="member.facebook_url"
+          target="_blank"
+          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#1877F2] hover:bg-blue-50 transition-all"
+          title="Facebook"
+          @click.stop
+        >
+          <i class="pi pi-facebook text-[11px]" />
+        </a>
       </div>
     </div>
   </NuxtLink>
