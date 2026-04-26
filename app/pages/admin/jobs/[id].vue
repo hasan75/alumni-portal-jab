@@ -25,6 +25,7 @@ const form = reactive({
   slug: '',
   company: '',
   company_logo_url: '',
+  cover_image_url: '',
   company_website: '',
   category_id: null as number | null,
   description: '',
@@ -172,6 +173,16 @@ async function save() {
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Requirements (HTML)</label>
           <Textarea v-model="form.requirements" :rows="4" class="w-full font-mono text-xs" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Job Cover Image</label>
+          <SharedImageUpload
+            v-model="form.cover_image_url"
+            bucket="jobs"
+            :path="isNew ? 'new' : id"
+            aspect-ratio="3/1"
+            placeholder="Optional cover image for the job listing"
+          />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>

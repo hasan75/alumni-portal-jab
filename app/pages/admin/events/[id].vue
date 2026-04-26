@@ -162,7 +162,7 @@ async function save() {
             v-model="form.cover_image_url"
             bucket="events"
             :path="isNew ? 'new' : id"
-            aspect-ratio="16/9"
+            aspect-ratio="3/1"
             placeholder="Drop an event cover image here or click to browse"
           />
         </div>

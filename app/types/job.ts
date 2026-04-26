@@ -15,6 +15,7 @@ export interface Job {
   title: string
   company: string
   company_logo_url: string | null
+  cover_image_url: string | null
   company_website: string | null
   category_id: number | null
   category?: JobCategory

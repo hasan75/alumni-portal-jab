@@ -137,24 +137,26 @@ async function removeImage() {
         alt="Uploaded image"
         class="h-full w-full object-cover"
       />
-      <div class="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
+      <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100" :class="compact ? 'gap-1.5' : 'gap-2'">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all duration-200 active:scale-95"
+          class="inline-flex items-center justify-center rounded-lg text-white transition-all duration-200 active:scale-95"
+          :class="compact ? 'h-8 w-8' : 'gap-1.5 px-3 py-1.5 text-xs font-medium'"
           style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);"
           @click="openFilePicker"
         >
-          <Icon name="heroicons:arrow-path" class="h-3.5 w-3.5" />
-          Replace
+          <Icon name="heroicons:arrow-path" :class="compact ? 'h-4 w-4' : 'h-3.5 w-3.5'" />
+          <span v-if="!compact">Replace</span>
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all duration-200 active:scale-95"
+          class="inline-flex items-center justify-center rounded-lg text-white transition-all duration-200 active:scale-95"
+          :class="compact ? 'h-8 w-8' : 'gap-1.5 px-3 py-1.5 text-xs font-medium'"
           style="background: rgba(255,59,48,0.4); border: 1px solid rgba(255,59,48,0.5);"
           @click="removeImage"
         >
-          <Icon name="heroicons:trash" class="h-3.5 w-3.5" />
-          Remove
+          <Icon name="heroicons:trash" :class="compact ? 'h-4 w-4' : 'h-3.5 w-3.5'" />
+          <span v-if="!compact">Remove</span>
         </button>
       </div>
     </div>

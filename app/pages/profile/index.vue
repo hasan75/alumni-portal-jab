@@ -78,6 +78,17 @@ watch(() => authStore.profile, (profile) => {
 
 const saving = ref(false)
 
+async function saveImageField(field: 'avatar_url' | 'cover_photo_url', value: string | null) {
+  form[field] = value
+  const result = await authStore.updateProfile({ [field]: value })
+  if (result.success) {
+    toast.add({ severity: 'success', summary: 'Photo updated', life: 2000 })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Failed to save photo', detail: result.error, life: 4000 })
+  }
+}
+
 async function saveProfile() {
   saving.value = true
   const result = await authStore.updateProfile({
@@ -110,11 +121,12 @@ async function saveProfile() {
         <!-- Cover photo -->
         <div class="relative">
           <SharedImageUpload
-            v-model="form.cover_photo_url"
+            :model-value="form.cover_photo_url"
             bucket="covers"
             :path="authStore.profile?.id || 'temp'"
             aspect-ratio="3/1"
             placeholder="Upload cover photo"
+            @update:model-value="(v) => saveImageField('cover_photo_url', v)"
           />
         </div>
 
@@ -122,12 +134,13 @@ async function saveProfile() {
         <div class="relative px-6 pb-5 pt-4 flex items-end gap-4">
           <div class="-mt-10 relative z-10">
             <SharedImageUpload
-              v-model="form.avatar_url"
+              :model-value="form.avatar_url"
               bucket="avatars"
               :path="authStore.profile?.id || 'temp'"
               aspect-ratio="1/1"
               compact
               placeholder="Photo"
+              @update:model-value="(v) => saveImageField('avatar_url', v)"
             />
           </div>
           <div class="pb-1">

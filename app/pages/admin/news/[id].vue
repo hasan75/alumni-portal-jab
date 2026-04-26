@@ -127,7 +127,7 @@ async function save() {
             v-model="form.featured_image_url"
             bucket="news"
             :path="isNew ? 'new' : id"
-            aspect-ratio="16/9"
+            aspect-ratio="3/1"
             placeholder="Drop a featured image here or click to browse"
           />
         </div>
