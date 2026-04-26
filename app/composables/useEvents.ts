@@ -1,4 +1,5 @@
 import type { Event, EventRsvp, RsvpStatus } from '~/types/event'
+import { useAuthStore } from '~/stores/auth'
 
 export interface EventFilters {
   status?: string
@@ -12,6 +13,13 @@ export interface EventFilters {
 
 export function useEvents() {
   const supabase = useSupabaseClient()
+  const authStore = useAuthStore()
+
+  async function resolveUserId(): Promise<string | null> {
+    if (authStore.profile?.id) return authStore.profile.id
+    const { data: { user } } = await supabase.auth.getUser()
+    return user?.id ?? null
+  }
 
   const events = ref<Event[]>([])
   const totalCount = ref(0)
@@ -93,14 +101,14 @@ export function useEvents() {
   }
 
   async function rsvpToEvent(eventId: number, status: RsvpStatus) {
-    const user = useSupabaseUser()
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const userId = await resolveUserId()
+    if (!userId) return { success: false, error: 'Not authenticated' }
 
     const { error: upsertError } = await supabase
       .from('event_rsvps')
       .upsert({
         event_id: eventId,
-        alumni_id: user.value.id,
+        alumni_id: userId,
         status,
       }, { onConflict: 'event_id,alumni_id' })
 
@@ -108,39 +116,39 @@ export function useEvents() {
   }
 
   async function removeRsvp(eventId: number) {
-    const user = useSupabaseUser()
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const userId = await resolveUserId()
+    if (!userId) return { success: false, error: 'Not authenticated' }
 
     const { error: deleteError } = await supabase
       .from('event_rsvps')
       .delete()
       .eq('event_id', eventId)
-      .eq('alumni_id', user.value.id)
+      .eq('alumni_id', userId)
 
     return { success: !deleteError, error: deleteError?.message }
   }
 
   async function fetchMyRsvps(): Promise<EventRsvp[]> {
-    const user = useSupabaseUser()
-    if (!user.value) return []
+    const userId = await resolveUserId()
+    if (!userId) return []
 
     const { data } = await supabase
       .from('event_rsvps')
       .select('*')
-      .eq('alumni_id', user.value.id)
+      .eq('alumni_id', userId)
 
     return (data as EventRsvp[]) || []
   }
 
   async function fetchMyRsvpForEvent(eventId: number): Promise<EventRsvp | null> {
-    const user = useSupabaseUser()
-    if (!user.value) return null
+    const userId = await resolveUserId()
+    if (!userId) return null
 
     const { data } = await supabase
       .from('event_rsvps')
       .select('*')
       .eq('event_id', eventId)
-      .eq('alumni_id', user.value.id)
+      .eq('alumni_id', userId)
       .single()
 
     return data as EventRsvp | null

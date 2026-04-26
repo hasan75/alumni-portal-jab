@@ -118,12 +118,12 @@ export function useMembers() {
   }
 
   async function approveMembers(ids: string[]) {
-    const user = useSupabaseUser()
+    const { data: { user } } = await supabase.auth.getUser()
     const { error: updateError } = await supabase
       .from('alumni_profiles')
       .update({
         status: 'active',
-        approved_by: user.value?.id,
+        approved_by: user?.id,
         approved_at: new Date().toISOString(),
       })
       .in('id', ids)

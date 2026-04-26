@@ -17,7 +17,10 @@ const { fetchBatches } = useMembers()
 
 onMounted(async () => {
   if (!authStore.isLoaded) {
-    await authStore.loadProfile()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.id) {
+      await authStore.loadProfile(user.id)
+    }
   }
 })
 
