@@ -125,6 +125,9 @@ function formatDate(dateStr: string) {
         <h1 class="text-xl font-bold text-slate-900">Members</h1>
         <p class="text-slate-500 text-sm">Manage alumni member accounts</p>
       </div>
+      <NuxtLink to="/admin/members/new">
+        <Button label="New Member" icon="pi pi-plus" size="small" />
+      </NuxtLink>
     </div>
 
     <!-- Filters -->
