@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Nuxt build/generate output
+.nuxt/
+.output/
+dist/
+
+# Environment
+.env
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
+
+# Nitro
+.nitro/
+.cache/
+
+# Testing
+coverage/
