@@ -11,8 +11,7 @@ export interface FeedPost {
     display_name: string | null
     avatar_url: string | null
     batch_year: number | null
-    current_job_title: string | null
-    current_company: string | null
+    featured_work_summary: string | null
   }
   content: string
   image_urls: string[] | null

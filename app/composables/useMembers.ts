@@ -1,10 +1,9 @@
-import type { AlumniProfile, AlumniEducation, AlumniWorkExperience, Batch } from '~/types/member'
+import type { AlumniProfile, AlumniEducation, AlumniWorkExperience, Batch, SocialPlatform, SocialLink } from '~/types/member'
 
 export interface MemberFilters {
   search?: string
   batchYear?: number
   department?: string
-  industry?: string
   status?: string
   page?: number
   perPage?: number
@@ -29,15 +28,14 @@ export function useMembers() {
 
     let query = supabase
       .from('alumni_profiles')
-      .select('id, full_name, display_name, avatar_url, batch_year, current_job_title, current_company, industry, city, country, is_verified', { count: 'exact' })
+      .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, linkedin_url, facebook_url, portfolio_url, city, country, is_verified', { count: 'exact' })
       .eq('status', 'active')
 
     if (filters.search) {
-      query = query.or(`full_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%,current_company.ilike.%${filters.search}%`)
+      query = query.or(`full_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%,featured_work_summary.ilike.%${filters.search}%`)
     }
     if (filters.batchYear) query = query.eq('batch_year', filters.batchYear)
     if (filters.department) query = query.eq('department', filters.department)
-    if (filters.industry) query = query.eq('industry', filters.industry)
 
     query = query.order('full_name').range(from, to)
 
@@ -179,6 +177,231 @@ export function useMembers() {
     return count || 0
   }
 
+  // ── Education CRUD ──────────────────────────────────────
+
+  async function fetchEducation(alumniId: string) {
+    const { data, error: fetchError } = await supabase
+      .from('alumni_education')
+      .select('*')
+      .eq('alumni_id', alumniId)
+      .order('start_year', { ascending: false })
+
+    if (fetchError) return []
+    return (data as AlumniEducation[]) || []
+  }
+
+  async function addEducation(alumniId: string, record: Partial<AlumniEducation>) {
+    const { data, error: insertError } = await supabase
+      .from('alumni_education')
+      .insert({ ...record, alumni_id: alumniId })
+      .select()
+      .single()
+
+    if (!insertError) await recalcFeaturedEducation(alumniId)
+    return { success: !insertError, data: data as AlumniEducation | null, error: insertError?.message }
+  }
+
+  async function updateEducation(id: number, record: Partial<AlumniEducation>) {
+    const { data, error: updateError } = await supabase
+      .from('alumni_education')
+      .update(record)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (!updateError && data) await recalcFeaturedEducation((data as AlumniEducation).alumni_id)
+    return { success: !updateError, data: data as AlumniEducation | null, error: updateError?.message }
+  }
+
+  async function deleteEducation(id: number, alumniId: string) {
+    const { error: deleteError } = await supabase
+      .from('alumni_education')
+      .delete()
+      .eq('id', id)
+
+    if (!deleteError) await recalcFeaturedEducation(alumniId)
+    return { success: !deleteError, error: deleteError?.message }
+  }
+
+  // ── Work Experience CRUD ────────────────────────────────
+
+  async function fetchWorkExperience(alumniId: string) {
+    const { data, error: fetchError } = await supabase
+      .from('alumni_work_experience')
+      .select('*')
+      .eq('alumni_id', alumniId)
+      .order('start_date', { ascending: false })
+
+    if (fetchError) return []
+    return (data as AlumniWorkExperience[]) || []
+  }
+
+  async function addWorkExperience(alumniId: string, record: Partial<AlumniWorkExperience>) {
+    const { data, error: insertError } = await supabase
+      .from('alumni_work_experience')
+      .insert({ ...record, alumni_id: alumniId })
+      .select()
+      .single()
+
+    if (!insertError) await recalcFeaturedWork(alumniId)
+    return { success: !insertError, data: data as AlumniWorkExperience | null, error: insertError?.message }
+  }
+
+  async function updateWorkExperience(id: number, record: Partial<AlumniWorkExperience>) {
+    const { data, error: updateError } = await supabase
+      .from('alumni_work_experience')
+      .update(record)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (!updateError && data) await recalcFeaturedWork((data as AlumniWorkExperience).alumni_id)
+    return { success: !updateError, data: data as AlumniWorkExperience | null, error: updateError?.message }
+  }
+
+  async function deleteWorkExperience(id: number, alumniId: string) {
+    const { error: deleteError } = await supabase
+      .from('alumni_work_experience')
+      .delete()
+      .eq('id', id)
+
+    if (!deleteError) await recalcFeaturedWork(alumniId)
+    return { success: !deleteError, error: deleteError?.message }
+  }
+
+  // ── Social Links ────────────────────────────────────────
+
+  async function fetchSocialPlatforms() {
+    const { data } = await supabase
+      .from('social_platforms')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order')
+
+    return (data as SocialPlatform[]) || []
+  }
+
+  async function fetchSocialLinks(alumniId: string) {
+    const { data } = await supabase
+      .from('social_links')
+      .select('*')
+      .eq('entity_type', 'alumni')
+      .eq('entity_id', alumniId)
+      .order('sort_order')
+
+    return (data as SocialLink[]) || []
+  }
+
+  async function saveSocialLink(alumniId: string, platformSlug: string, url: string) {
+    const { data, error: upsertError } = await supabase
+      .from('social_links')
+      .upsert(
+        { entity_type: 'alumni', entity_id: alumniId, platform_slug: platformSlug, url },
+        { onConflict: 'entity_type,entity_id,platform_slug,url' },
+      )
+      .select()
+      .single()
+
+    return { success: !upsertError, data: data as SocialLink | null, error: upsertError?.message }
+  }
+
+  async function deleteSocialLink(id: number) {
+    const { error: deleteError } = await supabase
+      .from('social_links')
+      .delete()
+      .eq('id', id)
+
+    return { success: !deleteError, error: deleteError?.message }
+  }
+
+  // ── Featured & Sync ─────────────────────────────────────
+
+  function buildEduSummary(edu: { institution: string, degree?: string | null, field_of_study?: string | null }): string {
+    const parts = [edu.degree, edu.field_of_study].filter(Boolean)
+    return parts.length ? `${parts.join(' ')} · ${edu.institution}` : edu.institution
+  }
+
+  function buildWorkSummary(work: { job_title: string, company: string }): string {
+    return `${work.job_title} at ${work.company}`
+  }
+
+  async function recalcFeaturedEducation(alumniId: string) {
+    const records = await fetchEducation(alumniId)
+    if (records.length === 0) {
+      await supabase.from('alumni_profiles').update({ featured_education_summary: null }).eq('id', alumniId)
+      return
+    }
+
+    let featured = records.find(r => r.is_featured)
+    if (!featured) {
+      featured = records.find(r => r.is_current) || records[0]
+      await supabase.from('alumni_education').update({ is_featured: false }).eq('alumni_id', alumniId)
+      await supabase.from('alumni_education').update({ is_featured: true }).eq('id', featured.id)
+    }
+
+    const summary = buildEduSummary(featured)
+    await supabase.from('alumni_profiles').update({ featured_education_summary: summary }).eq('id', alumniId)
+  }
+
+  async function recalcFeaturedWork(alumniId: string) {
+    const records = await fetchWorkExperience(alumniId)
+    if (records.length === 0) {
+      await supabase.from('alumni_profiles').update({ featured_work_summary: null }).eq('id', alumniId)
+      return
+    }
+
+    let featured = records.find(r => r.is_featured)
+    if (!featured) {
+      featured = records.find(r => r.is_current) || records[0]
+      await supabase.from('alumni_work_experience').update({ is_featured: false }).eq('alumni_id', alumniId)
+      await supabase.from('alumni_work_experience').update({ is_featured: true }).eq('id', featured.id)
+    }
+
+    const summary = buildWorkSummary(featured)
+    await supabase.from('alumni_profiles').update({ featured_work_summary: summary }).eq('id', alumniId)
+  }
+
+  async function setFeaturedEducation(alumniId: string, eduId: number) {
+    await supabase.from('alumni_education').update({ is_featured: false }).eq('alumni_id', alumniId)
+    await supabase.from('alumni_education').update({ is_featured: true }).eq('id', eduId)
+    await recalcFeaturedEducation(alumniId)
+    return { success: true }
+  }
+
+  async function unsetFeaturedEducation(alumniId: string) {
+    await supabase.from('alumni_education').update({ is_featured: false }).eq('alumni_id', alumniId)
+    await recalcFeaturedEducation(alumniId)
+    return { success: true }
+  }
+
+  async function setFeaturedWork(alumniId: string, workId: number) {
+    await supabase.from('alumni_work_experience').update({ is_featured: false }).eq('alumni_id', alumniId)
+    await supabase.from('alumni_work_experience').update({ is_featured: true }).eq('id', workId)
+    await recalcFeaturedWork(alumniId)
+    return { success: true }
+  }
+
+  async function unsetFeaturedWork(alumniId: string) {
+    await supabase.from('alumni_work_experience').update({ is_featured: false }).eq('alumni_id', alumniId)
+    await recalcFeaturedWork(alumniId)
+    return { success: true }
+  }
+
+  async function syncSocialUrls(alumniId: string) {
+    const links = await fetchSocialLinks(alumniId)
+    const linkedin = links.find(l => l.platform_slug === 'linkedin')?.url || null
+    const facebook = links.find(l => l.platform_slug === 'facebook')?.url || null
+    const portfolio = links.find(l => l.platform_slug === 'github')?.url || null
+
+    await supabase.from('alumni_profiles').update({
+      linkedin_url: linkedin,
+      facebook_url: facebook,
+      portfolio_url: portfolio,
+    }).eq('id', alumniId)
+
+    return { success: true }
+  }
+
   return {
     members,
     totalCount,
@@ -194,5 +417,24 @@ export function useMembers() {
     updateMember,
     fetchBatches,
     fetchPendingCount,
+    fetchEducation,
+    addEducation,
+    updateEducation,
+    deleteEducation,
+    fetchWorkExperience,
+    addWorkExperience,
+    updateWorkExperience,
+    deleteWorkExperience,
+    fetchSocialPlatforms,
+    fetchSocialLinks,
+    saveSocialLink,
+    deleteSocialLink,
+    setFeaturedEducation,
+    unsetFeaturedEducation,
+    setFeaturedWork,
+    unsetFeaturedWork,
+    syncSocialUrls,
+    recalcFeaturedEducation,
+    recalcFeaturedWork,
   }
 }

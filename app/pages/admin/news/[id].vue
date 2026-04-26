@@ -4,6 +4,7 @@ import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
+import { extractStorageImagesFromHtml, deleteOrphanedImages } from '~/utils/htmlContent'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
@@ -18,6 +19,7 @@ useSeoMeta({ title: isNew ? 'New Article | Admin' : 'Edit Article | Admin', robo
 
 const categories = ref<any[]>([])
 const saving = ref(false)
+const initialContentImages = ref<string[]>([])
 
 const form = reactive({
   title: '',
@@ -47,7 +49,10 @@ onMounted(async () => {
   if (!isNew) {
     const supabase = useSupabaseClient()
     const { data } = await supabase.from('articles').select('*').eq('id', id).single()
-    if (data) Object.assign(form, data)
+    if (data) {
+      Object.assign(form, data)
+      initialContentImages.value = extractStorageImagesFromHtml(data.content || '', 'news')
+    }
   }
 })
 
@@ -72,6 +77,8 @@ async function save() {
 
   const result = await saveArticle(payload)
   if (result.success) {
+    const currentImages = extractStorageImagesFromHtml(form.content, 'news')
+    await deleteOrphanedImages(initialContentImages.value, currentImages, 'news')
     toast.add({ severity: 'success', summary: 'Article saved!', life: 2000 })
     await navigateTo('/admin/news')
   }
@@ -118,8 +125,16 @@ async function save() {
           <Textarea v-model="form.excerpt" :rows="2" class="w-full" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Content (HTML)</label>
-          <Textarea v-model="form.content" :rows="10" class="w-full font-mono text-xs" />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Content</label>
+          <SharedRichTextEditor
+            id="news-content"
+            v-model="form.content"
+            :height="350"
+            :allow-images="true"
+            bucket="news"
+            :storage-path="isNew ? 'new' : id"
+            placeholder="Write the article content..."
+          />
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Featured Image</label>
