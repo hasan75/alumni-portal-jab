@@ -17,18 +17,7 @@ defineProps<{
     <div class="relative flex items-start gap-3.5">
       <!-- Avatar -->
       <div class="shrink-0">
-        <img
-          v-if="member.avatar_url"
-          :src="member.avatar_url"
-          :alt="member.full_name"
-          class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-200"
-        >
-        <div
-          v-else
-          class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg avatar-gradient"
-        >
-          {{ (member.display_name || member.full_name).charAt(0).toUpperCase() }}
-        </div>
+        <AppAvatar :src="member.avatar_url" :name="member.display_name || member.full_name" size="lg" />
       </div>
 
       <!-- Info -->

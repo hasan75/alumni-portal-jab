@@ -95,18 +95,7 @@ async function handleHide() {
     <!-- Header -->
     <div class="relative p-5 flex items-start justify-between gap-3">
       <div class="flex items-start gap-3">
-        <img
-          v-if="post.author?.avatar_url"
-          :src="post.author.avatar_url"
-          class="w-10 h-10 rounded-full object-cover ring-2 ring-primary-200 shrink-0"
-          alt="Author"
-        >
-        <div
-          v-else
-          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium text-sm shrink-0 avatar-gradient"
-        >
-          {{ post.author?.full_name?.charAt(0)?.toUpperCase() || '?' }}
-        </div>
+        <AppAvatar :src="post.author?.avatar_url" :name="post.author?.full_name" size="md" class="shrink-0" />
         <div>
           <NuxtLink
             :to="`/directory/${post.author_id}`"
@@ -206,8 +195,8 @@ async function handleHide() {
           :key="comment.id"
           class="flex gap-2"
         >
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 text-xs font-medium shrink-0 bg-slate-100 border border-slate-200">
-            {{ comment.author?.full_name?.charAt(0)?.toUpperCase() || '?' }}
+          <div class="w-7 h-7 shrink-0">
+            <AppAvatar :src="comment.author?.avatar_url" :name="comment.author?.full_name" size="xs" />
           </div>
           <div class="flex-1 rounded-xl px-3.5 py-2.5 bg-slate-50 border border-slate-100">
             <p class="text-xs font-semibold text-slate-600">
@@ -219,8 +208,8 @@ async function handleHide() {
 
         <!-- Comment input -->
         <div class="flex gap-2 pt-1">
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium shrink-0 avatar-gradient">
-            {{ authStore.displayName.charAt(0).toUpperCase() }}
+          <div class="w-7 h-7 shrink-0">
+            <AppAvatar :src="null" :name="authStore.displayName" size="xs" />
           </div>
           <div class="flex-1 flex gap-2">
             <input

@@ -27,18 +27,7 @@ defineProps<{
       <!-- Avatar (overlapping cover) -->
       <div class="flex justify-between items-end -mt-12 mb-4">
         <div class="relative">
-          <img
-            v-if="profile.avatar_url"
-            :src="profile.avatar_url"
-            :alt="profile.full_name"
-            class="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-xl"
-          >
-          <div
-            v-else
-            class="w-20 h-20 rounded-full ring-4 ring-white flex items-center justify-center text-white font-bold text-2xl shadow-xl avatar-gradient"
-          >
-            {{ profile.full_name.charAt(0).toUpperCase() }}
-          </div>
+          <AppAvatar :src="profile.avatar_url" :name="profile.full_name" size="xl" class="ring-4 ring-white shadow-xl" />
           <div
             v-if="profile.is_verified"
             class="absolute bottom-0 right-0 rounded-full w-6 h-6 flex items-center justify-center shadow-lg bg-gradient-to-br from-primary-600 to-primary-500 border-2 border-white"

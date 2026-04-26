@@ -64,7 +64,7 @@ watch([selectedCategory, selectedType, remote], refresh)
         <InputText
           v-model="search"
           placeholder="Search jobs..."
-          class="w-full pl-9"
+          class="w-full search-input"
           @input="onSearch"
         />
       </div>

@@ -64,7 +64,7 @@ watch(selectedBatch, () => {
         <InputText
           v-model="search"
           placeholder="Search by name or company..."
-          class="w-full pl-9"
+          class="w-full search-input"
           @input="onSearch"
         />
       </div>

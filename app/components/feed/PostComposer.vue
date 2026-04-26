@@ -51,18 +51,7 @@ async function handlePost() {
     <div class="relative flex gap-3">
       <!-- Avatar -->
       <div class="shrink-0">
-        <img
-          v-if="authStore.profile?.avatar_url"
-          :src="authStore.profile.avatar_url"
-          class="w-9 h-9 rounded-full object-cover ring-2 ring-primary-200"
-          alt="Your avatar"
-        >
-        <div
-          v-else
-          class="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm avatar-gradient"
-        >
-          {{ authStore.displayName.charAt(0).toUpperCase() }}
-        </div>
+        <AppAvatar :src="authStore.profile?.avatar_url" :name="authStore.displayName" size="sm" />
       </div>
 
       <div class="flex-1">

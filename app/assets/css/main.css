@@ -334,6 +334,11 @@ html {
   color: rgba(255,255,255,0.45) !important;
 }
 
+/* ── Search input with icon ──────────────────────────────── */
+.p-inputtext.search-input {
+  padding-left: 2.5rem !important;
+}
+
 /* ── Reduced motion ──────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,

@@ -43,7 +43,15 @@ function closeUserMenu(e: Event) {
   }
 }
 
-onMounted(() => document.addEventListener('click', closeUserMenu))
+onMounted(async () => {
+  document.addEventListener('click', closeUserMenu)
+  if (!authStore.isLoaded) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (authUser?.id) {
+      await authStore.loadProfile(authUser.id)
+    }
+  }
+})
 onUnmounted(() => document.removeEventListener('click', closeUserMenu))
 </script>
 
@@ -85,18 +93,7 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
               class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm text-slate-700 hover:bg-slate-900/8 transition-all duration-200"
               @click.stop="userMenuOpen = !userMenuOpen"
             >
-              <img
-                v-if="authStore.profile?.avatar_url"
-                :src="authStore.profile.avatar_url"
-                class="w-7 h-7 rounded-full object-cover ring-2 ring-primary-200"
-                alt="Avatar"
-              >
-              <div
-                v-else
-                class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-white font-medium text-xs shadow-sm"
-              >
-                {{ authStore.displayName?.charAt(0)?.toUpperCase() || '?' }}
-              </div>
+              <AppAvatar :src="authStore.profile?.avatar_url" :name="authStore.displayName" size="xs" />
               <span class="hidden sm:inline font-medium">{{ authStore.displayName }}</span>
               <i class="pi pi-chevron-down text-[10px] text-slate-400" />
             </button>
