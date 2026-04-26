@@ -11,8 +11,10 @@ definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 
 const route = useRoute()
 const id = route.params.id as string
+const isNew = id === 'new'
 
 const { fetchProfile, updateMember, approveMembers, rejectMember, suspendMember, fetchBatches, fetchEducation, addEducation, updateEducation, deleteEducation, fetchWorkExperience, addWorkExperience, updateWorkExperience, deleteWorkExperience, fetchSocialPlatforms, fetchSocialLinks, setFeaturedEducation, unsetFeaturedEducation, setFeaturedWork, unsetFeaturedWork } = useMembers()
+const user = useSupabaseUser()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -54,30 +56,30 @@ const workForm = reactive({
 
 onMounted(async () => {
   loading.value = true
-  const [p, batchList] = await Promise.all([
-    fetchProfile(id),
-    fetchBatches(),
-  ])
-  profile.value = p
+  const batchList = await fetchBatches()
   batches.value = batchList.map(b => ({ label: b.label || `Class of ${b.year}`, value: b.year }))
-  loading.value = false
 
-  if (p) {
-    const [edu, work, platforms, links] = await Promise.all([
-      fetchEducation(id),
-      fetchWorkExperience(id),
-      fetchSocialPlatforms(),
-      fetchSocialLinks(id),
-    ])
-    educationRecords.value = edu
-    workRecords.value = work
-    socialPlatforms.value = platforms
-    socialLinks.value = links
+  if (!isNew) {
+    const p = await fetchProfile(id)
+    profile.value = p
+    if (p) {
+      const [edu, work, platforms, links] = await Promise.all([
+        fetchEducation(id),
+        fetchWorkExperience(id),
+        fetchSocialPlatforms(),
+        fetchSocialLinks(id),
+      ])
+      educationRecords.value = edu
+      workRecords.value = work
+      socialPlatforms.value = platforms
+      socialLinks.value = links
+    }
   }
+  loading.value = false
 })
 
 useSeoMeta({
-  title: computed(() => `${profile.value?.full_name || 'Member'} | Admin`),
+  title: computed(() => isNew ? 'New Member | Admin' : `${profile.value?.full_name || 'Member'} | Admin`),
   robots: 'noindex',
 })
 
@@ -101,6 +103,43 @@ const form = reactive({
 watch(profile, (p) => {
   if (p) Object.assign(form, { ...p })
 }, { immediate: true })
+
+const createForm = reactive({
+  email: '',
+  full_name: '',
+  batch_year: null as number | null,
+  student_id: '',
+  phone: '',
+  department: '',
+  degree: '',
+  current_status: 'other' as string,
+  city: '',
+  country: '',
+  status: 'active' as string,
+})
+
+async function create() {
+  if (!createForm.email || !createForm.full_name) {
+    toast.add({ severity: 'warn', summary: 'Email and full name are required', life: 3000 })
+    return
+  }
+  saving.value = true
+  try {
+    await $fetch('/api/auth/admin-create-member', {
+      method: 'POST',
+      body: {
+        ...createForm,
+        admin_id: user.value?.id,
+      },
+    })
+    toast.add({ severity: 'success', summary: 'Member created', detail: `An invite email has been sent to ${createForm.email}.`, life: 4000 })
+    await navigateTo('/admin/members')
+  }
+  catch (e: any) {
+    toast.add({ severity: 'error', summary: 'Creation failed', detail: e.data?.statusMessage || e.message || 'Unknown error', life: 3000 })
+  }
+  saving.value = false
+}
 
 async function save() {
   saving.value = true
@@ -229,11 +268,93 @@ async function approve() {
       <NuxtLink to="/admin/members" class="text-slate-500 hover:text-primary-600">
         <i class="pi pi-arrow-left" />
       </NuxtLink>
-      <h1 class="text-xl font-bold text-slate-900">Edit Member</h1>
-      <MemberStatusBadge v-if="profile" :status="profile.status" />
+      <h1 class="text-xl font-bold text-slate-900">{{ isNew ? 'New Member' : 'Edit Member' }}</h1>
+      <MemberStatusBadge v-if="profile && !isNew" :status="profile.status" />
     </div>
 
     <div v-if="loading" class="bg-white border border-slate-200 rounded-xl h-64 animate-pulse" />
+
+    <!-- Create Mode -->
+    <template v-else-if="isNew">
+      <form class="space-y-4" @submit.prevent="create">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Email *</label>
+              <InputText v-model="createForm.email" type="email" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
+              <InputText v-model="createForm.full_name" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Graduation Batch</label>
+              <Select v-model="createForm.batch_year" :options="batches" option-label="label" option-value="value" placeholder="Select batch" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Student ID</label>
+              <InputText v-model="createForm.student_id" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Phone</label>
+              <InputText v-model="createForm.phone" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Department</label>
+              <InputText v-model="createForm.department" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Degree</label>
+              <InputText v-model="createForm.degree" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Current Status</label>
+              <Select
+                v-model="createForm.current_status"
+                :options="[
+                  { label: 'Studying', value: 'studying' },
+                  { label: 'Working', value: 'working' },
+                  { label: 'Business / Self-employed', value: 'business' },
+                  { label: 'Studying & Working', value: 'studying_and_working' },
+                  { label: 'Other', value: 'other' },
+                ]"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">City</label>
+              <InputText v-model="createForm.city" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Country</label>
+              <InputText v-model="createForm.country" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Member Status</label>
+              <Select
+                v-model="createForm.status"
+                :options="[
+                  { label: 'Active (Recommended)', value: 'active' },
+                  { label: 'Pending', value: 'pending' },
+                ]"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+          </div>
+          <Message severity="info" :closable="false" class="text-sm">
+            An invite email will be sent to the member so they can set their own password.
+          </Message>
+        </div>
+
+        <div class="flex justify-end">
+          <Button type="submit" label="Create Member" icon="pi pi-user-plus" :loading="saving" />
+        </div>
+      </form>
+    </template>
 
     <template v-else-if="profile">
       <!-- Quick actions for pending -->
