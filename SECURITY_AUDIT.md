@@ -10,7 +10,7 @@
 
 | Severity | Count |
 |----------|-------|
-| Critical | 4 → 2 fixed |
+| Critical | 4 → 3 fixed |
 | High | 3 → 1 fixed |
 | Medium | 7 |
 | Low / Informational | 4 |
@@ -188,7 +188,9 @@ const altAttr = imageAlt.value ? ` alt="${imageAlt.value.replace(/"/g, '&quot;')
 
 ---
 
-### 4. Registration endpoint — no input validation, no rate limiting
+### 4. ~~Registration endpoint — no input validation, no rate limiting~~ FIXED
+
+**Status:** Fixed. The endpoint now uses Zod schema validation for all fields (email format + lowercase normalization, password 8–128 chars, full_name 2–100 chars trimmed, batch_year integer 1900–current year, phone regex, student_id max 50). Rate limiting added at 1 request per 60s per email. "Already registered" error replaced with generic "Registration failed" to prevent email enumeration. Orphaned auth user cleanup now logs errors.
 
 **File:** `server/api/auth/register.post.ts`
 
@@ -324,7 +326,9 @@ supabase: {
 
 ## Medium
 
-### 8. Email case normalization inconsistency
+### 8. ~~Email case normalization inconsistency~~ PARTIALLY FIXED
+
+**Status:** Registration now normalizes email to lowercase via Zod `.transform(v => v.toLowerCase().trim())`. The case-insensitive unique index on the database is still recommended to enforce this at the DB level.
 
 **Files:** `server/api/auth/register.post.ts` vs `server/api/auth/forgot-password.post.ts`
 
@@ -545,7 +549,7 @@ devtools: { enabled: process.env.NODE_ENV !== 'production' }
 | ~~2~~ | ~~**Fix RLS self-approval** — restrict alumni from updating sensitive columns~~ | ~~1 hour~~ | ~~#5~~ DONE |
 | 3 | **Install DOMPurify** — replace custom sanitizer + add render-time sanitization | ~1.5 hours | #3 |
 | 4 | **Add CSRF / origin validation** to all POST server routes | ~1 hour | #6 |
-| 5 | **Add Zod validation + rate limiting** to registration endpoint | ~1.5 hours | #4 |
+| ~~5~~ | ~~**Add Zod validation + rate limiting** to registration endpoint~~ | ~~1.5 hours~~ | ~~#4~~ DONE |
 | 6 | **Normalize emails** to lowercase in registration + add case-insensitive index | ~30 min | #8 |
 | 7 | **Configure Supabase cookies** and restrict CORS origins | ~30 min | #7, #9 |
 | 8 | **Add middleware** to unprotected member pages | ~15 min | #10 |
