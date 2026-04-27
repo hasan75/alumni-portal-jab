@@ -94,6 +94,63 @@ export function approvalEmail(opts: { fullName: string, appName: string, siteUrl
   return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
 }
 
+export function adminInviteEmail(opts: { fullName: string, appName: string, siteUrl: string, inviteLink: string }): string {
+  const content = `
+  <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">You've Been Invited!</h1>
+  <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">Hi ${opts.fullName},</p>
+  <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+    An administrator has created an account for you on <strong>${opts.appName}</strong>. To get started, set your password using the button below.
+  </p>
+  <p style="margin:0 0 28px;font-size:15px;color:#475569;line-height:1.6;">
+    Once your password is set, you'll have access to the alumni directory, events, jobs board, and more.
+  </p>
+  <!-- CTA Button -->
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+  <tr><td style="background:#2563EB;border-radius:12px;">
+    <a href="${opts.inviteLink}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.2px;">Set Password &amp; Log In &rarr;</a>
+  </td></tr>
+  </table>
+  <p style="margin:0 0 24px;font-size:13px;color:#94a3b8;text-align:center;">
+    Or copy this link: <a href="${opts.inviteLink}" style="color:#2563EB;text-decoration:none;word-break:break-all;">${opts.inviteLink}</a>
+  </p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+  <tr><td style="background:#f1f5f9;border-radius:12px;padding:16px 20px;">
+    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.5;">
+      <strong style="color:#475569;">Note:</strong> This invite link expires in 24 hours. If it expires, contact your administrator to resend the invitation.
+    </p>
+  </td></tr>
+  </table>`
+
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+}
+
+export function passwordResetEmail(opts: { fullName: string, appName: string, siteUrl: string, resetLink: string }): string {
+  const content = `
+  <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">Reset Your Password</h1>
+  <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">Hi ${opts.fullName},</p>
+  <p style="margin:0 0 16px;font-size:15px;color:#475569;line-height:1.6;">
+    We received a request to reset your <strong>${opts.appName}</strong> password. Click the button below to choose a new password.
+  </p>
+  <!-- CTA Button -->
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+  <tr><td style="background:#2563EB;border-radius:12px;">
+    <a href="${opts.resetLink}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.2px;">Reset Password &rarr;</a>
+  </td></tr>
+  </table>
+  <p style="margin:0 0 24px;font-size:13px;color:#94a3b8;text-align:center;">
+    Or copy this link: <a href="${opts.resetLink}" style="color:#2563EB;text-decoration:none;word-break:break-all;">${opts.resetLink}</a>
+  </p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+  <tr><td style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;">
+    <p style="margin:0;font-size:14px;color:#92400e;line-height:1.5;">
+      This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email — your password will remain unchanged.
+    </p>
+  </td></tr>
+  </table>`
+
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+}
+
 export function rejectionOrSuspensionEmail(opts: { fullName: string, appName: string, siteUrl: string, status: 'rejected' | 'suspended' }): string {
   const isRejected = opts.status === 'rejected'
   const title = isRejected ? 'Application Update' : 'Account Suspended'

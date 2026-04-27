@@ -76,9 +76,11 @@ Skip this step if you're just testing locally with `onboarding@resend.dev`.
 | Event | Trigger | Email Sent To |
 |-------|---------|---------------|
 | **Registration** | User submits the registration form | The registering user |
+| **Admin Invite** | Admin creates a member from the admin panel | The invited member (with password-set link) |
 | **Approval** | Admin approves a member (single or bulk) | Each approved member |
 | **Rejection** | Admin rejects a pending member | The rejected member |
 | **Suspension** | Admin suspends an active member | The suspended member |
+| **Password Reset** | Member clicks "Forgot password?" on login page | The requesting member (rate-limited: 1 per 60s per email) |
 
 ### Architecture
 
@@ -92,6 +94,8 @@ server/
   api/
     auth/
       register.post.ts     # Sends registration confirmation after signup
+      forgot-password.post.ts  # Rate-limited, generates reset link, sends branded email
+      change-password.post.ts  # Verifies current password, updates via admin API
     members/
       approve.post.ts      # Updates status + sends approval email
       reject.post.ts       # Updates status + sends rejection email
