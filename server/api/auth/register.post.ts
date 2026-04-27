@@ -57,5 +57,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create profile' })
   }
 
+  const appName = config.public.appName as string
+  const siteUrl = config.public.siteUrl as string
+  await sendEmail({
+    to: email,
+    subject: `${appName} — Registration Received`,
+    html: registrationConfirmationEmail({ fullName: full_name, appName, siteUrl }),
+  })
+
   return { success: true, message: 'Registration submitted. Awaiting admin approval.' }
 })

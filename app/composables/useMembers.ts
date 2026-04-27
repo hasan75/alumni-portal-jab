@@ -117,34 +117,44 @@ export function useMembers() {
 
   async function approveMembers(ids: string[]) {
     const { data: { user } } = await supabase.auth.getUser()
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({
-        status: 'active',
-        approved_by: user?.id,
-        approved_at: new Date().toISOString(),
+    try {
+      const result = await $fetch('/api/members/approve', {
+        method: 'POST',
+        body: { ids, adminId: user?.id },
       })
-      .in('id', ids)
-
-    return { success: !updateError, error: updateError?.message }
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function rejectMember(id: string) {
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({ status: 'rejected' })
-      .eq('id', id)
-
-    return { success: !updateError, error: updateError?.message }
+    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      await $fetch('/api/members/reject', {
+        method: 'POST',
+        body: { id, adminId: user?.id },
+      })
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function suspendMember(id: string) {
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({ status: 'suspended' })
-      .eq('id', id)
-
-    return { success: !updateError, error: updateError?.message }
+    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      await $fetch('/api/members/suspend', {
+        method: 'POST',
+        body: { id, adminId: user?.id },
+      })
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function updateMember(id: string, updates: Partial<AlumniProfile>) {
