@@ -1,11 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { email, full_name, admin_id, batch_year, student_id, phone, department, degree, current_status, city, country, status } = body
+  const { email, full_name, batch_year, student_id, phone, department, degree, current_status, city, country, status } = body
 
-  if (!email || !full_name || !admin_id) {
+  if (!email || !full_name) {
     throw createError({ statusCode: 400, statusMessage: 'Missing required fields' })
+  }
+
+  const userClient = await serverSupabaseClient(event)
+  const { data: { user } } = await userClient.auth.getUser()
+
+  if (!user?.id) {
+    throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }
 
   const config = useRuntimeConfig()
@@ -21,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const { data: adminCheck } = await adminSupabase
     .from('admin_users')
     .select('id')
-    .eq('id', admin_id)
+    .eq('id', user.id)
     .eq('is_active', true)
     .single()
 
@@ -65,7 +73,7 @@ export default defineEventHandler(async (event) => {
       city: city || null,
       country: country || null,
       status: memberStatus,
-      approved_by: memberStatus === 'active' ? admin_id : null,
+      approved_by: memberStatus === 'active' ? user.id : null,
       approved_at: memberStatus === 'active' ? new Date().toISOString() : null,
     })
 

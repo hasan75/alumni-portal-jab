@@ -116,11 +116,10 @@ export function useMembers() {
   }
 
   async function approveMembers(ids: string[]) {
-    const { data: { user } } = await supabase.auth.getUser()
     try {
-      const result = await $fetch('/api/members/approve', {
+      await $fetch('/api/members/approve', {
         method: 'POST',
-        body: { ids, adminId: user?.id },
+        body: { ids },
       })
       return { success: true, error: undefined }
     }
@@ -130,11 +129,10 @@ export function useMembers() {
   }
 
   async function rejectMember(id: string) {
-    const { data: { user } } = await supabase.auth.getUser()
     try {
       await $fetch('/api/members/reject', {
         method: 'POST',
-        body: { id, adminId: user?.id },
+        body: { id },
       })
       return { success: true, error: undefined }
     }
@@ -144,11 +142,10 @@ export function useMembers() {
   }
 
   async function suspendMember(id: string) {
-    const { data: { user } } = await supabase.auth.getUser()
     try {
       await $fetch('/api/members/suspend', {
         method: 'POST',
-        body: { id, adminId: user?.id },
+        body: { id },
       })
       return { success: true, error: undefined }
     }

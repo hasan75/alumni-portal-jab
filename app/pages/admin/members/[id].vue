@@ -14,7 +14,6 @@ const id = route.params.id as string
 const isNew = id === 'new'
 
 const { fetchProfile, updateMember, approveMembers, rejectMember, suspendMember, fetchBatches, fetchEducation, addEducation, updateEducation, deleteEducation, fetchWorkExperience, addWorkExperience, updateWorkExperience, deleteWorkExperience, fetchSocialPlatforms, fetchSocialLinks, setFeaturedEducation, unsetFeaturedEducation, setFeaturedWork, unsetFeaturedWork } = useMembers()
-const user = useSupabaseUser()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -127,10 +126,7 @@ async function create() {
   try {
     await $fetch('/api/auth/admin-create-member', {
       method: 'POST',
-      body: {
-        ...createForm,
-        admin_id: user.value?.id,
-      },
+      body: createForm,
     })
     toast.add({ severity: 'success', summary: 'Member created', detail: `An invite email has been sent to ${createForm.email}.`, life: 4000 })
     await navigateTo('/admin/members')

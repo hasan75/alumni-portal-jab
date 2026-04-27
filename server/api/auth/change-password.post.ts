@@ -1,15 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { currentPassword, newPassword, userId } = body
+  const { currentPassword, newPassword } = body
 
-  if (!currentPassword || !newPassword || !userId) {
+  if (!currentPassword || !newPassword) {
     throw createError({ statusCode: 400, statusMessage: 'All fields are required' })
   }
 
   if (newPassword.length < 8) {
     throw createError({ statusCode: 400, statusMessage: 'New password must be at least 8 characters' })
+  }
+
+  const userClient = await serverSupabaseClient(event)
+  const { data: { user } } = await userClient.auth.getUser()
+
+  if (!user?.id) {
+    throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }
 
   const config = useRuntimeConfig()
@@ -25,7 +33,7 @@ export default defineEventHandler(async (event) => {
   const { data: profile } = await adminSupabase
     .from('alumni_profiles')
     .select('email')
-    .eq('id', userId)
+    .eq('id', user.id)
     .single()
 
   if (!profile) {
@@ -41,7 +49,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Current password is incorrect' })
   }
 
-  const { error: updateError } = await adminSupabase.auth.admin.updateUserById(userId, {
+  const { error: updateError } = await adminSupabase.auth.admin.updateUserById(user.id, {
     password: newPassword,
   })
 

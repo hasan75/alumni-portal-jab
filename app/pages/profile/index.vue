@@ -137,7 +137,6 @@ async function changePassword() {
       body: {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
-        userId: authStore.profile?.id,
       },
     })
     toast.add({ severity: 'success', summary: 'Password updated successfully', life: 3000 })

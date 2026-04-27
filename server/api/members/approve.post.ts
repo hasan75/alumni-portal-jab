@@ -1,11 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { ids, adminId } = body
+  const { ids } = body
 
-  if (!ids?.length || !adminId) {
+  if (!ids?.length) {
     throw createError({ statusCode: 400, statusMessage: 'Missing required fields' })
+  }
+
+  const userClient = await serverSupabaseClient(event)
+  const { data: { user } } = await userClient.auth.getUser()
+
+  if (!user?.id) {
+    throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }
 
   const config = useRuntimeConfig()
@@ -21,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const { data: adminCheck } = await adminSupabase
     .from('admin_users')
     .select('id')
-    .eq('id', adminId)
+    .eq('id', user.id)
     .eq('is_active', true)
     .single()
 
@@ -33,7 +41,7 @@ export default defineEventHandler(async (event) => {
     .from('alumni_profiles')
     .update({
       status: 'active',
-      approved_by: adminId,
+      approved_by: user.id,
       approved_at: new Date().toISOString(),
     })
     .in('id', ids)
