@@ -11,7 +11,7 @@ const registrationSchema = z.object({
 })
 
 const rateLimitMap = new Map<string, number>()
-const RATE_LIMIT_SECONDS = 60
+const RATE_LIMIT_SECONDS = import.meta.dev ? 5 : 60
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -74,6 +74,11 @@ export default defineEventHandler(async (event) => {
     await adminSupabase.auth.admin.deleteUser(userId).catch((err) => {
       console.error('Failed to cleanup orphaned auth user:', userId, err)
     })
+    if (profileError.code === '23505') {
+      if (profileError.message.includes('student_id'))
+        throw createError({ statusCode: 409, statusMessage: 'This Student ID is already registered for that batch' })
+      throw createError({ statusCode: 409, statusMessage: 'Email is already registered' })
+    }
     throw createError({ statusCode: 500, statusMessage: 'Registration failed' })
   }
 
