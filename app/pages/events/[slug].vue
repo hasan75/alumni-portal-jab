@@ -2,6 +2,8 @@
 import RsvpButton from '~/components/events/RsvpButton.vue'
 import { formatDateTime, formatDateShort } from '~/utils/formatters'
 
+const { sanitizeHTML } = useSanitize()
+
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 const route = useRoute()
@@ -86,7 +88,7 @@ useSeoMeta({
           <p class="text-slate-700 leading-relaxed">{{ event.description }}</p>
         </div>
 
-        <div v-if="event.content" class="mt-4 prose max-w-none text-sm text-slate-700" v-html="event.content" />
+        <div v-if="event.content" class="mt-4 prose max-w-none text-sm text-slate-700" v-html="sanitizeHTML(event.content)" />
       </div>
     </div>
   </div>

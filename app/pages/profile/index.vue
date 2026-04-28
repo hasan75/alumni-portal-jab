@@ -3,6 +3,7 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
+import Password from 'primevue/password'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useAuthStore } from '~/stores/auth'
 import type { AlumniEducation, AlumniWorkExperience } from '~/types/member'
@@ -106,6 +107,52 @@ watch(() => authStore.profile, (profile) => {
 }, { immediate: true })
 
 const saving = ref(false)
+
+const showPasswordForm = ref(false)
+const passwordSaving = ref(false)
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+})
+
+async function changePassword() {
+  if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    toast.add({ severity: 'warn', summary: 'Please fill in all password fields', life: 3000 })
+    return
+  }
+  if (passwordForm.newPassword.length < 8) {
+    toast.add({ severity: 'warn', summary: 'New password must be at least 8 characters', life: 3000 })
+    return
+  }
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    toast.add({ severity: 'warn', summary: 'New passwords do not match', life: 3000 })
+    return
+  }
+
+  passwordSaving.value = true
+  try {
+    await $fetch('/api/auth/change-password', {
+      method: 'POST',
+      body: {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      },
+    })
+    toast.add({ severity: 'success', summary: 'Password updated successfully', life: 3000 })
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+    showPasswordForm.value = false
+  }
+  catch (e: any) {
+    const msg = e.data?.statusMessage || e.message || 'Failed to change password'
+    toast.add({ severity: 'error', summary: msg, life: 4000 })
+  }
+  finally {
+    passwordSaving.value = false
+  }
+}
 
 async function saveImageField(field: 'avatar_url' | 'cover_photo_url', value: string | null) {
   form[field] = value
@@ -462,7 +509,7 @@ async function saveSocialUrl(platformSlug: string) {
               <p class="font-medium text-slate-900 text-sm">{{ edu.institution }}</p>
               <p v-if="edu.degree || edu.field_of_study" class="text-xs text-slate-500">{{ [edu.degree, edu.field_of_study].filter(Boolean).join(' · ') }}</p>
               <p v-if="edu.start_year" class="text-xs text-slate-400">{{ edu.start_year }}{{ edu.end_year ? ` – ${edu.end_year}` : edu.is_current ? ' – Present' : '' }}</p>
-              <a v-if="edu.url" :href="edu.url" target="_blank" class="text-xs text-primary-600 hover:underline">{{ edu.url }}</a>
+              <a v-if="edu.url" :href="safeUrl(edu.url)" target="_blank" class="text-xs text-primary-600 hover:underline">{{ edu.url }}</a>
             </div>
           </div>
           <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -542,7 +589,7 @@ async function saveSocialUrl(platformSlug: string) {
               <p class="font-medium text-slate-900 text-sm">{{ work.job_title }}</p>
               <p class="text-xs text-slate-500">{{ work.company }}{{ work.location ? ` · ${work.location}` : '' }}</p>
               <p v-if="work.start_date" class="text-xs text-slate-400">{{ work.start_date }}{{ work.end_date ? ` – ${work.end_date}` : work.is_current ? ' – Present' : '' }}</p>
-              <a v-if="work.url" :href="work.url" target="_blank" class="text-xs text-primary-600 hover:underline">{{ work.url }}</a>
+              <a v-if="work.url" :href="safeUrl(work.url)" target="_blank" class="text-xs text-primary-600 hover:underline">{{ work.url }}</a>
             </div>
           </div>
           <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -613,6 +660,79 @@ async function saveSocialUrl(platformSlug: string) {
         >
           <span class="text-sm text-slate-600">{{ item.label }}</span>
           <ToggleSwitch v-model="(form as any)[item.field]" />
+        </div>
+      </div>
+
+      <!-- Change Password -->
+      <div class="glass-light relative overflow-hidden p-6 space-y-4 animate-fade-in-up delay-5">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+        <div class="relative flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-slate-900">Change Password</h2>
+            <p class="text-sm text-slate-500">Update your account password</p>
+          </div>
+          <button
+            v-if="!showPasswordForm"
+            type="button"
+            class="text-xs font-medium text-primary-600 hover:text-primary-500 transition-colors"
+            @click="showPasswordForm = true"
+          >
+            Change
+          </button>
+        </div>
+
+        <div v-if="showPasswordForm" class="relative space-y-4 pt-2">
+          <div>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Current Password</label>
+            <Password
+              v-model="passwordForm.currentPassword"
+              :feedback="false"
+              toggle-mask
+              class="w-full"
+              input-class="w-full"
+              placeholder="Enter current password"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">New Password</label>
+            <Password
+              v-model="passwordForm.newPassword"
+              :feedback="true"
+              toggle-mask
+              class="w-full"
+              input-class="w-full"
+              placeholder="Minimum 8 characters"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Confirm New Password</label>
+            <Password
+              v-model="passwordForm.confirmPassword"
+              :feedback="false"
+              toggle-mask
+              class="w-full"
+              input-class="w-full"
+              placeholder="Re-enter new password"
+            />
+          </div>
+          <div class="flex gap-2 justify-end">
+            <button
+              type="button"
+              class="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 rounded-lg transition-colors"
+              @click="showPasswordForm = false; passwordForm.currentPassword = ''; passwordForm.newPassword = ''; passwordForm.confirmPassword = ''"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="px-5 py-2 text-sm font-semibold text-white rounded-xl bg-primary-600 hover:bg-primary-500 active:scale-95 transition-all duration-200 disabled:opacity-60"
+              :disabled="passwordSaving"
+              @click="changePassword"
+            >
+              <i v-if="passwordSaving" class="pi pi-spin pi-spinner mr-1" />
+              Update Password
+            </button>
+          </div>
         </div>
       </div>
 

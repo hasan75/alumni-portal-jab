@@ -14,7 +14,6 @@ const id = route.params.id as string
 const isNew = id === 'new'
 
 const { fetchProfile, updateMember, approveMembers, rejectMember, suspendMember, fetchBatches, fetchEducation, addEducation, updateEducation, deleteEducation, fetchWorkExperience, addWorkExperience, updateWorkExperience, deleteWorkExperience, fetchSocialPlatforms, fetchSocialLinks, setFeaturedEducation, unsetFeaturedEducation, setFeaturedWork, unsetFeaturedWork } = useMembers()
-const user = useSupabaseUser()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -127,10 +126,7 @@ async function create() {
   try {
     await $fetch('/api/auth/admin-create-member', {
       method: 'POST',
-      body: {
-        ...createForm,
-        admin_id: user.value?.id,
-      },
+      body: createForm,
     })
     toast.add({ severity: 'success', summary: 'Member created', detail: `An invite email has been sent to ${createForm.email}.`, life: 4000 })
     await navigateTo('/admin/members')
@@ -603,7 +599,7 @@ async function approve() {
           <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="`background: ${socialPlatforms.find(p => p.slug === link.platform_slug)?.color || '#666'}15;`">
             <i :class="socialPlatforms.find(p => p.slug === link.platform_slug)?.icon || 'pi pi-link'" class="text-sm" :style="`color: ${socialPlatforms.find(p => p.slug === link.platform_slug)?.color || '#666'};`" />
           </div>
-          <a :href="link.url" target="_blank" class="text-sm text-primary-600 hover:underline truncate">{{ link.url }}</a>
+          <a :href="safeUrl(link.url)" target="_blank" class="text-sm text-primary-600 hover:underline truncate">{{ link.url }}</a>
         </div>
       </div>
     </template>

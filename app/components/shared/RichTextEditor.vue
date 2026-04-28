@@ -1,6 +1,24 @@
 <script setup lang="ts">
+import DOMPurify from 'isomorphic-dompurify'
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'b', 'i', 'em', 'strong', 'u', 's', 'a', 'p', 'br', 'span',
+    'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4',
+    'blockquote', 'code', 'pre', 'img', 'hr', 'div', 'font',
+  ],
+  ALLOWED_ATTR: [
+    'href', 'target', 'rel', 'src', 'alt', 'class', 'style',
+    'width', 'height', 'data-align', 'color',
+  ],
+  ALLOW_DATA_ATTR: false,
+}
+
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
 interface Props {
   id?: string
@@ -97,7 +115,7 @@ function syncTextContent() {
 
 onMounted(() => {
   if (editorRef.value) {
-    editorRef.value.innerHTML = props.modelValue || ''
+    editorRef.value.innerHTML = sanitizeHtml(props.modelValue || '')
     syncTextContent()
   }
   document.addEventListener('selectionchange', handleSelectionChange)
@@ -127,29 +145,12 @@ watch(showColorPicker, (newValue) => {
 
 watch(() => props.modelValue, (newValue) => {
   if (editorRef.value && editorRef.value.innerHTML !== newValue) {
-    editorRef.value.innerHTML = newValue || ''
+    editorRef.value.innerHTML = sanitizeHtml(newValue || '')
   }
 })
 
 function sanitizeHtml(html: string): string {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-
-  const dangerousTags = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button']
-  dangerousTags.forEach((tag) => {
-    doc.querySelectorAll(tag).forEach(el => el.remove())
-  })
-
-  const dangerousAttrs = ['onclick', 'onerror', 'onload', 'onmouseover', 'onmouseout', 'onfocus', 'onblur']
-  doc.querySelectorAll('*').forEach((el) => {
-    dangerousAttrs.forEach(attr => el.removeAttribute(attr))
-    const href = el.getAttribute('href')
-    if (href && href.trim().toLowerCase().startsWith('javascript:')) {
-      el.removeAttribute('href')
-    }
-  })
-
-  return doc.body.innerHTML
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG)
 }
 
 function updateActiveFormats() {
@@ -165,7 +166,7 @@ function updateActiveFormats() {
 function handleInputInternal() {
   if (editorRef.value) {
     syncTextContent()
-    const content = editorRef.value.innerHTML
+    const content = sanitizeHtml(editorRef.value.innerHTML)
     emit('update:modelValue', content)
   }
 }
@@ -267,7 +268,7 @@ function insertLink() {
 
     const url = linkUrl.value.startsWith('http') ? linkUrl.value : `https://${linkUrl.value}`
     const text = linkText.value || url
-    const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`
+    const linkHtml = `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeAttr(text)}</a>`
     insertHTML(linkHtml)
 
     linkUrl.value = ''
@@ -355,10 +356,13 @@ async function insertImage() {
       selection?.addRange(savedSelection.value)
     }
 
-    const alignClass = imageAlign.value !== 'none' ? ` class="img-${imageAlign.value}"` : ''
-    const widthAttr = imageWidth.value ? ` width="${imageWidth.value}"` : ''
-    const altAttr = imageAlt.value ? ` alt="${imageAlt.value}"` : ' alt=""'
-    const imgHtml = `<img src="${url}"${altAttr}${widthAttr}${alignClass} />`
+    const validAligns = ['none', 'left', 'center', 'right']
+    const safeAlign = validAligns.includes(imageAlign.value) ? imageAlign.value : 'none'
+    const alignClass = safeAlign !== 'none' ? ` class="img-${safeAlign}"` : ''
+    const safeWidth = imageWidth.value.replace(/[^0-9%px]/g, '')
+    const widthAttr = safeWidth ? ` width="${escapeAttr(safeWidth)}"` : ''
+    const altAttr = imageAlt.value ? ` alt="${escapeAttr(imageAlt.value)}"` : ' alt=""'
+    const imgHtml = `<img src="${escapeAttr(url)}"${altAttr}${widthAttr}${alignClass} />`
     insertHTML(imgHtml)
 
     imageFile.value = null

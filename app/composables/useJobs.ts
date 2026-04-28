@@ -38,7 +38,8 @@ export function useJobs() {
     if (filters.isRemote !== undefined) query = query.eq('is_remote', filters.isRemote)
     if (filters.featured) query = query.eq('is_featured', true)
     if (filters.search) {
-      query = query.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`)
+      const term = sanitizeSearchTerm(filters.search)
+      query = query.or(`title.ilike.%${term}%,company.ilike.%${term}%`)
     }
 
     query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false }).range(from, to)
@@ -71,7 +72,8 @@ export function useJobs() {
 
     if (filters.status) query = query.eq('status', filters.status)
     if (filters.search) {
-      query = query.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`)
+      const term = sanitizeSearchTerm(filters.search)
+      query = query.or(`title.ilike.%${term}%,company.ilike.%${term}%`)
     }
 
     query = query.order('created_at', { ascending: false }).range(from, to)

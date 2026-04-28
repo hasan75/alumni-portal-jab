@@ -3,7 +3,7 @@ import AlumniPreset from './app/presets/alumni.js'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: import.meta.dev },
 
   css: [
     './app/assets/css/main.css',
@@ -55,6 +55,11 @@ export default defineNuxtConfig({
       callback: '/feed',
       exclude: ['/', '/directory', '/events/**', '/news/**', '/jobs/**', '/register', '/admin/login'],
     },
+    cookieOptions: {
+      maxAge: 60 * 60 * 24 * 7,
+      secure: !import.meta.dev,
+      sameSite: 'lax',
+    },
   },
 
   fonts: {
@@ -76,8 +81,14 @@ export default defineNuxtConfig({
     },
   },
 
+  image: {
+    domains: [new URL(process.env.SUPABASE_URL || 'https://placeholder.supabase.co').hostname],
+  },
+
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    resendApiKey: process.env.RESEND_API_KEY,
+    resendFromEmail: process.env.RESEND_FROM_EMAIL || 'Alumni Portal <noreply@yourdomain.com>',
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'Alumni Portal',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
@@ -87,8 +98,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
     '/news/**': { swr: 1800 },
-    '/events/**': { swr: 900 },
-    '/jobs/**': { swr: 1800 },
-    '/api/**': { cors: true },
+    '/events/**': {},
+    '/jobs/**': {},
+    '/api/**': { cors: false },
   },
 })

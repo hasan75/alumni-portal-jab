@@ -45,6 +45,7 @@ const navSections = computed(() => [
     label: 'Settings',
     items: [
       { label: 'App Settings', icon: 'pi pi-cog', to: '/admin/settings' },
+      { label: 'Audit Log', icon: 'pi pi-list', to: '/admin/audit-log' },
     ],
   },
 ])

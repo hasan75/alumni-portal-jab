@@ -27,12 +27,12 @@ export function useMembers() {
     const to = from + perPage - 1
 
     let query = supabase
-      .from('alumni_profiles')
+      .from('alumni_directory_view')
       .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, linkedin_url, facebook_url, portfolio_url, city, country, is_verified', { count: 'exact' })
-      .eq('status', 'active')
 
     if (filters.search) {
-      query = query.or(`full_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%,featured_work_summary.ilike.%${filters.search}%`)
+      const term = sanitizeSearchTerm(filters.search)
+      query = query.or(`full_name.ilike.%${term}%,display_name.ilike.%${term}%,featured_work_summary.ilike.%${term}%`)
     }
     if (filters.batchYear) query = query.eq('batch_year', filters.batchYear)
     if (filters.department) query = query.eq('department', filters.department)
@@ -68,7 +68,8 @@ export function useMembers() {
 
     if (filters.status) query = query.eq('status', filters.status)
     if (filters.search) {
-      query = query.or(`full_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
+      const term = sanitizeSearchTerm(filters.search)
+      query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`)
     }
     if (filters.batchYear) query = query.eq('batch_year', filters.batchYear)
 
@@ -101,7 +102,7 @@ export function useMembers() {
 
   async function fetchProfileWithDetails(id: string) {
     const [profileResult, educationResult, workResult] = await Promise.all([
-      supabase.from('alumni_profiles').select('*').eq('id', id).single(),
+      supabase.from('alumni_directory_view').select('*').eq('id', id).single(),
       supabase.from('alumni_education').select('*').eq('alumni_id', id).order('start_year', { ascending: false }),
       supabase.from('alumni_work_experience').select('*').eq('alumni_id', id).order('start_date', { ascending: false }),
     ])
@@ -116,35 +117,42 @@ export function useMembers() {
   }
 
   async function approveMembers(ids: string[]) {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({
-        status: 'active',
-        approved_by: user?.id,
-        approved_at: new Date().toISOString(),
+    try {
+      await $fetch('/api/members/approve', {
+        method: 'POST',
+        body: { ids },
       })
-      .in('id', ids)
-
-    return { success: !updateError, error: updateError?.message }
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function rejectMember(id: string) {
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({ status: 'rejected' })
-      .eq('id', id)
-
-    return { success: !updateError, error: updateError?.message }
+    try {
+      await $fetch('/api/members/reject', {
+        method: 'POST',
+        body: { id },
+      })
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function suspendMember(id: string) {
-    const { error: updateError } = await supabase
-      .from('alumni_profiles')
-      .update({ status: 'suspended' })
-      .eq('id', id)
-
-    return { success: !updateError, error: updateError?.message }
+    try {
+      await $fetch('/api/members/suspend', {
+        method: 'POST',
+        body: { id },
+      })
+      return { success: true, error: undefined }
+    }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message }
+    }
   }
 
   async function updateMember(id: string, updates: Partial<AlumniProfile>) {
@@ -293,6 +301,10 @@ export function useMembers() {
   }
 
   async function saveSocialLink(alumniId: string, platformSlug: string, url: string) {
+    if (!url || url.length > 2048 || !safeUrl(url)) {
+      return { error: 'Invalid URL' }
+    }
+
     const { data, error: upsertError } = await supabase
       .from('social_links')
       .upsert(

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { formatDate } from '~/utils/formatters'
 
+const { sanitizeHTML } = useSanitize()
 const route = useRoute()
 const slug = route.params.slug as string
 
@@ -69,7 +70,7 @@ useSeoMeta({
       <div
         v-if="article.content"
         class="prose prose-slate max-w-none text-slate-700 leading-relaxed"
-        v-html="article.content"
+        v-html="sanitizeHTML(article.content)"
       />
     </article>
   </div>

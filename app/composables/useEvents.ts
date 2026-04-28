@@ -43,7 +43,7 @@ export function useEvents() {
     if (filters.eventType) query = query.eq('event_type', filters.eventType)
     if (filters.batchYear) query = query.eq('batch_year', filters.batchYear)
     if (filters.upcoming) query = query.gte('start_datetime', new Date().toISOString())
-    if (filters.search) query = query.ilike('title', `%${filters.search}%`)
+    if (filters.search) query = query.ilike('title', `%${sanitizeSearchTerm(filters.search)}%`)
 
     query = query.order('start_datetime', { ascending: filters.upcoming !== false }).range(from, to)
 
@@ -73,7 +73,7 @@ export function useEvents() {
       .select('*', { count: 'exact' })
 
     if (filters.status) query = query.eq('status', filters.status)
-    if (filters.search) query = query.ilike('title', `%${filters.search}%`)
+    if (filters.search) query = query.ilike('title', `%${sanitizeSearchTerm(filters.search)}%`)
 
     query = query.order('start_datetime', { ascending: false }).range(from, to)
 

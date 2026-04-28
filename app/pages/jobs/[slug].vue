@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { formatSalary, formatJobType, formatDate } from '~/utils/formatters'
 
+const { sanitizeHTML } = useSanitize()
+
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 const route = useRoute()
@@ -38,7 +40,7 @@ useSeoMeta({
           <div class="flex-1">
             <h1 class="text-2xl font-bold text-slate-900">{{ job.title }}</h1>
             <p class="text-slate-600 mt-1">
-              <a v-if="job.company_website" :href="job.company_website" target="_blank" class="hover:text-primary-600">
+              <a v-if="job.company_website" :href="safeUrl(job.company_website)" target="_blank" class="hover:text-primary-600">
                 {{ job.company }}
               </a>
               <span v-else>{{ job.company }}</span>
@@ -58,7 +60,7 @@ useSeoMeta({
         <div class="mt-4 flex gap-3">
           <a
             v-if="job.apply_url"
-            :href="job.apply_url"
+            :href="safeUrl(job.apply_url)"
             target="_blank"
             class="px-5 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -77,15 +79,15 @@ useSeoMeta({
       <div class="p-6 space-y-5">
         <div v-if="job.description">
           <h2 class="font-semibold text-slate-900 mb-2">Description</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.description" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.description)" />
         </div>
         <div v-if="job.requirements">
           <h2 class="font-semibold text-slate-900 mb-2">Requirements</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.requirements" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.requirements)" />
         </div>
         <div v-if="job.benefits">
           <h2 class="font-semibold text-slate-900 mb-2">Benefits</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.benefits" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.benefits)" />
         </div>
         <div v-if="job.application_deadline" class="text-sm text-slate-500">
           <i class="pi pi-clock mr-1" />
