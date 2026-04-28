@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { formatSalary, formatJobType, formatDate } from '~/utils/formatters'
 
+const { sanitizeHTML } = useSanitize()
+
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 const route = useRoute()
@@ -77,15 +79,15 @@ useSeoMeta({
       <div class="p-6 space-y-5">
         <div v-if="job.description">
           <h2 class="font-semibold text-slate-900 mb-2">Description</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.description" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.description)" />
         </div>
         <div v-if="job.requirements">
           <h2 class="font-semibold text-slate-900 mb-2">Requirements</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.requirements" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.requirements)" />
         </div>
         <div v-if="job.benefits">
           <h2 class="font-semibold text-slate-900 mb-2">Benefits</h2>
-          <div class="prose prose-sm max-w-none text-slate-600" v-html="job.benefits" />
+          <div class="prose prose-sm max-w-none text-slate-600" v-html="sanitizeHTML(job.benefits)" />
         </div>
         <div v-if="job.application_deadline" class="text-sm text-slate-500">
           <i class="pi pi-clock mr-1" />
