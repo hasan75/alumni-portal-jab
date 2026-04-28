@@ -89,31 +89,17 @@ export function useFeed() {
   }
 
   async function createPost(content: string, imageUrls: string[] = [], scope: PostScope = 'general', batchYear?: number) {
-    const userId = await resolveUserId()
-    if (!userId) return { success: false, error: 'Not authenticated' }
-
-    const { data, error: insertError } = await supabase
-      .from('feed_posts')
-      .insert({
-        author_id: userId,
-        content,
-        image_urls: imageUrls.length > 0 ? imageUrls : null,
-        post_scope: scope,
-        batch_year: batchYear || null,
+    try {
+      const response = await $fetch<{ success: boolean, data: FeedPost }>('/api/feed/posts', {
+        method: 'POST',
+        body: { content, image_urls: imageUrls, post_scope: scope, batch_year: batchYear || null },
       })
-      .select(`
-        *,
-        author:alumni_profiles!author_id(full_name, display_name, avatar_url, batch_year, featured_work_summary)
-      `)
-      .single()
-
-    if (insertError) {
-      return { success: false, error: insertError.message }
+      posts.value = [response.data, ...posts.value]
+      return { success: true, data: response.data }
     }
-
-    // Prepend to feed
-    posts.value = [data as FeedPost, ...posts.value]
-    return { success: true, data: data as FeedPost }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message || 'Failed to create post' }
+    }
   }
 
   async function toggleReaction(postId: number, reactionType: ReactionType) {
@@ -172,29 +158,18 @@ export function useFeed() {
   }
 
   async function addComment(postId: number, content: string, parentCommentId?: number) {
-    const userId = await resolveUserId()
-    if (!userId) return { success: false, error: 'Not authenticated' }
-
-    const { data, error: insertError } = await supabase
-      .from('feed_comments')
-      .insert({
-        post_id: postId,
-        author_id: userId,
-        content,
-        parent_comment_id: parentCommentId || null,
+    try {
+      const response = await $fetch<{ success: boolean, data: FeedComment }>('/api/feed/comments', {
+        method: 'POST',
+        body: { post_id: postId, content, parent_comment_id: parentCommentId || null },
       })
-      .select(`
-        *,
-        author:alumni_profiles!author_id(full_name, display_name, avatar_url)
-      `)
-      .single()
-
-    if (!insertError) {
       const post = posts.value.find(p => p.id === postId)
       if (post) post.comment_count += 1
+      return { success: true, data: response.data }
     }
-
-    return { success: !insertError, data: data as FeedComment, error: insertError?.message }
+    catch (err: any) {
+      return { success: false, error: err.data?.statusMessage || err.message || 'Failed to post comment' }
+    }
   }
 
   async function removePost(postId: number, reason: string) {

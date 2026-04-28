@@ -51,6 +51,9 @@ async function handleAddComment() {
     comments.value.push(result.data)
     commentText.value = ''
   }
+  else if (result.error) {
+    toast.add({ severity: 'error', summary: 'Comment blocked', detail: result.error, life: 5000 })
+  }
   postingComment.value = false
 }
 

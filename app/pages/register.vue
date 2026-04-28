@@ -48,6 +48,10 @@ async function handleRegister() {
     error.value = 'Password must be at least 8 characters'
     return
   }
+  if (form.student_id && !form.batch_year) {
+    error.value = 'Please select your graduation year when providing a Student ID'
+    return
+  }
 
   loading.value = true
   error.value = ''

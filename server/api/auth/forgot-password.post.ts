@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     const { data: linkData } = await adminSupabase.auth.admin.generateLink({
       type: 'recovery',
       email: normalizedEmail,
-      options: { redirectTo: `${siteUrl}/auth/reset-password` },
+      options: { redirectTo: `${siteUrl}/auth/confirm` },
     })
 
     const resetLink = linkData?.properties?.action_link

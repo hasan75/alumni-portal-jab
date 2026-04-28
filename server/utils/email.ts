@@ -39,6 +39,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
       return { success: false, error: `Resend API error: ${response.status}` }
     }
 
+    const data = await response.json()
+    console.log('[email] Sent successfully:', data)
     return { success: true }
   }
   catch (err: any) {

@@ -20,12 +20,29 @@ const success = ref(false)
 const tokenValid = ref(true)
 const checking = ref(true)
 
-onMounted(async () => {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    tokenValid.value = false
-  }
-  checking.value = false
+onMounted(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      tokenValid.value = true
+      checking.value = false
+    }
+    else if (event === 'INITIAL_SESSION') {
+      tokenValid.value = !!session
+      checking.value = false
+    }
+  })
+
+  const timeout = setTimeout(() => {
+    if (checking.value) {
+      tokenValid.value = false
+      checking.value = false
+    }
+  }, 10000)
+
+  onUnmounted(() => {
+    subscription.unsubscribe()
+    clearTimeout(timeout)
+  })
 })
 
 async function handleReset() {
