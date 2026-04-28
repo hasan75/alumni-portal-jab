@@ -14,9 +14,14 @@ export function useSiteConfig() {
 
   async function fetchConfig() {
     loading.value = true
-    const { data, error } = await supabase.from('app_config').select('key, value')
-    if (!error && data) {
-      config.value = Object.fromEntries(data.map(row => [row.key, row.value || '']))
+    try {
+      const { data, error } = await supabase.from('app_config').select('key, value')
+      if (!error && data) {
+        config.value = Object.fromEntries(data.map(row => [row.key, row.value || '']))
+      }
+    }
+    catch {
+      // Supabase unavailable during prerender/build — fallbacks will be used
     }
     loading.value = false
   }

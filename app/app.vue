@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const { fetchConfig } = useSiteConfig()
-await fetchConfig()
+if (!import.meta.prerender) {
+  await fetchConfig()
+}
 </script>
 
 <template>
