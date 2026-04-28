@@ -11,6 +11,7 @@ const mobileMenuOpen = ref(false)
 const userMenuOpen = ref(false)
 
 const publicNavItems = [
+  { label: 'About', icon: 'pi pi-info-circle', to: '/about' },
   { label: 'Events', icon: 'pi pi-calendar', to: '/events' },
   { label: 'News', icon: 'pi pi-megaphone', to: '/news' },
   { label: 'Jobs', icon: 'pi pi-briefcase', to: '/jobs' },
@@ -60,9 +61,7 @@ onUnmounted(() => document.removeEventListener('click', closeUserMenu))
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
       <!-- Logo -->
       <NuxtLink :to="user ? '/feed' : '/'" class="flex items-center gap-2.5 shrink-0 group">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform duration-200">
-          A
-        </div>
+        <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-9 w-9 rounded-xl object-cover shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform duration-200" />
         <span class="font-semibold text-slate-900 text-base tracking-tight hidden sm:inline">{{ appName }}</span>
       </NuxtLink>
 

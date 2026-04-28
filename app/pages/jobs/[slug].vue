@@ -16,7 +16,7 @@ if (!job.value && !pending.value) {
 }
 
 useSeoMeta({
-  title: computed(() => `${job.value?.title || 'Job'} at ${job.value?.company || ''} | Alumni Portal`),
+  title: computed(() => `${job.value?.title || 'Job'} at ${job.value?.company || ''} | JAB Alumni`),
   description: computed(() => job.value?.description?.substring(0, 160) || ''),
 })
 </script>

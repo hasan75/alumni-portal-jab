@@ -9,7 +9,7 @@ import { useAuthStore } from '~/stores/auth'
 import type { AlumniEducation, AlumniWorkExperience } from '~/types/member'
 
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
-useSeoMeta({ title: 'My Profile | Alumni Portal', robots: 'noindex' })
+useSeoMeta({ title: 'My Profile | JAB Alumni', robots: 'noindex' })
 
 const authStore = useAuthStore()
 const supabase = useSupabaseClient()

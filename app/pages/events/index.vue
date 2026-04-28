@@ -4,7 +4,7 @@ import Select from 'primevue/select'
 
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
-useSeoMeta({ title: 'Events | Alumni Portal', description: 'Upcoming and past alumni events.' })
+useSeoMeta({ title: 'Events | JAB Alumni', description: 'Upcoming and past alumni events.' })
 
 const { fetchEvents, totalCount } = useEvents()
 

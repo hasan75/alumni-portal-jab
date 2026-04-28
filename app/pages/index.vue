@@ -6,10 +6,10 @@ import JobCard from '~/components/jobs/JobCard.vue'
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: 'Alumni Portal — Stay Connected',
-  description: 'The official alumni network. Connect with batchmates, discover events, news, and opportunities.',
-  ogTitle: 'Alumni Portal — Stay Connected',
-  ogDescription: 'The official alumni network. Connect with batchmates, discover events, news, and opportunities.',
+  title: 'JAB Alumni — Stay Connected',
+  description: 'The official alumni network of Janata Adarsha Bidyapith. Connect with batchmates, discover events, news, and opportunities.',
+  ogTitle: 'JAB Alumni — Stay Connected',
+  ogDescription: 'The official alumni network of Janata Adarsha Bidyapith. Connect with batchmates, discover events, news, and opportunities.',
   ogType: 'website',
   twitterCard: 'summary_large_image',
 })
@@ -43,13 +43,12 @@ const features = [
   { icon: 'pi pi-calendar', color: 'var(--color-system-purple)', label: 'Events', desc: 'RSVP to reunions, webinars, and workshops. Never miss a gathering.' },
   { icon: 'pi pi-briefcase', color: 'var(--color-system-orange)', label: 'Job Board', desc: 'Post and discover jobs shared exclusively within the alumni network.' },
   { icon: 'pi pi-megaphone', color: 'var(--color-system-green)', label: 'News & Updates', desc: 'Alumni achievements, institutional news, and community announcements.' },
-  { icon: 'pi pi-globe', color: 'var(--color-system-blue)', label: 'Global Network', desc: 'Connect with alumni from 50+ countries building lasting relationships.' },
+  { icon: 'pi pi-globe', color: 'var(--color-system-blue)', label: 'Alumni Network', desc: 'Connect with fellow alumni from Palash and beyond, building lasting relationships.' },
 ]
 
-const regions = [
-  'South Asia', 'Southeast Asia', 'East Asia',
-  'Middle East', 'Europe', 'North America',
-  'Australia', 'Africa', 'Latin America',
+const highlights = [
+  'Est. 1969', 'EIIN 112739', 'Dhaka Education Board', 'MPO Enlisted',
+  'Science', 'Business Studies', 'Humanities', 'Palash, Narsingdi',
 ]
 
 const testimonials = [
@@ -80,14 +79,17 @@ const testimonials = [
       <div class="absolute bottom-16 right-16 w-56 h-56 rounded-full opacity-20 blur-3xl animate-float delay-3 orb-secondary" />
 
       <div class="relative max-w-4xl mx-auto text-center mb-14">
-        <p class="text-xs font-semibold tracking-widest uppercase text-white/60 mb-4 animate-fade-in-up">Alumni Network</p>
-        <h1 class="text-5xl md:text-6xl font-semibold tracking-tight text-white mb-6 leading-tight animate-fade-in-up delay-1">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white shadow-xl border border-white/30 flex items-center justify-center animate-fade-in-up">
+          <img src="/images/logo_jap.png" alt="Janata Adarsha Bidyapith" class="w-[4.5rem] h-[4.5rem] rounded-xl object-cover" />
+        </div>
+        <p class="text-xs font-semibold tracking-widest uppercase text-white/60 mb-4 animate-fade-in-up delay-1">Alumni Network</p>
+        <h1 class="text-5xl md:text-6xl font-semibold tracking-tight text-white mb-6 leading-tight animate-fade-in-up delay-2">
           Welcome to<br>{{ appName }}
         </h1>
-        <p class="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-2">
+        <p class="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-3">
           {{ tagline }}
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-3">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-4">
           <NuxtLink
             to="/register"
             class="relative overflow-hidden inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold rounded-2xl text-white hover:-translate-y-1 hover:shadow-2xl active:scale-95 transition-all duration-300"
@@ -111,10 +113,10 @@ const testimonials = [
       <div class="relative max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
           v-for="(stat, i) in [
-            { value: '500+', label: 'Active Alumni' },
-            { value: '20+', label: 'Batches' },
-            { value: '50+', label: 'Countries' },
-            { value: '100+', label: 'Events Hosted' },
+            { value: '55+', label: 'Years of Legacy' },
+            { value: '1046+', label: 'Students Enrolled' },
+            { value: '24', label: 'Dedicated Teachers' },
+            { value: '3', label: 'Academic Streams' },
           ]"
           :key="stat.label"
           class="glass relative overflow-hidden p-5 text-center animate-fade-in-up"
@@ -185,37 +187,35 @@ const testimonials = [
         </div>
       </section>
 
-      <!-- Network / Global Reach -->
+      <!-- Our Heritage -->
       <section class="relative overflow-hidden rounded-[28px] px-10 py-14 gradient-brand animate-fade-in-up">
         <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-20 blur-3xl orb-primary" />
         <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Left: text -->
           <div>
-            <p class="text-xs font-semibold tracking-widest uppercase text-white/60 mb-3">Global Presence</p>
-            <h2 class="text-3xl font-semibold tracking-tight text-white mb-4">Alumni Spanning the Globe</h2>
-            <p class="text-white/60 leading-relaxed mb-6 max-w-sm">From Silicon Valley to Singapore, our alumni community reaches every corner of the world.</p>
+            <p class="text-xs font-semibold tracking-widest uppercase text-white/60 mb-3">Our Heritage</p>
+            <h2 class="text-3xl font-semibold tracking-tight text-white mb-4">Decades of Excellence</h2>
+            <p class="text-white/60 leading-relaxed mb-6 max-w-sm">Founded in 1969, Janata Adarsha Bidyapith has been shaping futures in Palash, Narsingdi for over five decades.</p>
             <NuxtLink
-              to="/directory"
+              to="/about"
               class="inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 hover:text-white transition-colors"
             >
-              Browse Directory <i class="pi pi-arrow-right text-xs" />
+              Learn More <i class="pi pi-arrow-right text-xs" />
             </NuxtLink>
           </div>
-          <!-- Right: region badges + mini stats -->
           <div>
             <div class="flex flex-wrap gap-2 mb-6">
               <span
-                v-for="region in regions"
-                :key="region"
+                v-for="item in highlights"
+                :key="item"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white/70 rounded-full"
                 style="background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-system-green shrink-0" />
-                {{ region }}
+                {{ item }}
               </span>
             </div>
             <p class="text-white/50 text-xs">
-              500+ Alumni &nbsp;·&nbsp; 50+ Countries &nbsp;·&nbsp; 20+ Batches
+              Est. 1969 &nbsp;&middot;&nbsp; Palash, Narsingdi &nbsp;&middot;&nbsp; 1046+ Students
             </p>
           </div>
         </div>

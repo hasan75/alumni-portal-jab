@@ -5,7 +5,7 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 
 definePageMeta({ layout: false })
-useSeoMeta({ title: 'Admin Login | Alumni Portal', robots: 'noindex, nofollow' })
+useSeoMeta({ title: 'Admin Login | JAB Alumni', robots: 'noindex, nofollow' })
 
 const supabase = useSupabaseClient()
 const { appName } = useSiteConfig()
@@ -75,8 +75,8 @@ async function handleLogin() {
     <div class="relative w-full max-w-md animate-fade-in-up">
       <div class="text-center mb-8">
         <NuxtLink to="/" class="inline-flex items-center gap-3 group">
-          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm text-white text-2xl font-bold border border-white/20 shadow-xl group-hover:scale-105 transition-transform duration-200">
-            A
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-xl border border-white/20 group-hover:scale-105 transition-transform duration-200">
+            <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-12 w-12 rounded-xl object-cover" />
           </div>
           <div class="text-left">
             <h1 class="text-xl font-semibold text-white tracking-tight">{{ appName }}</h1>

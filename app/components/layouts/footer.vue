@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { appName, institutionName } = useSiteConfig()
+const { appName, institutionName, contactEmail, contactPhone } = useSiteConfig()
 </script>
 
 <template>
@@ -10,14 +10,24 @@ const { appName, institutionName } = useSiteConfig()
         <!-- Brand -->
         <div class="md:col-span-2 animate-fade-in-up">
           <div class="flex items-center gap-3 mb-4">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold shadow-lg shadow-primary-500/30">
-              A
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg shadow-primary-500/30">
+              <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-9 w-9 rounded-lg object-cover" />
             </div>
             <span class="font-semibold text-white text-lg tracking-tight">{{ appName }}</span>
           </div>
           <p class="text-sm text-white/50 leading-relaxed max-w-xs">
-            The official alumni network of {{ institutionName }}. Stay connected with your batchmates and contribute to the community.
+            The alumni network of Janata Adarsha Bidyapith, Palash, Narsingdi. Reconnect with batchmates and stay part of the community.
           </p>
+          <div v-if="contactEmail || contactPhone" class="mt-4 space-y-2">
+            <a v-if="contactEmail" :href="`mailto:${contactEmail}`" class="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors duration-200">
+              <i class="pi pi-envelope text-xs" />
+              {{ contactEmail }}
+            </a>
+            <a v-if="contactPhone" :href="`tel:${contactPhone}`" class="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors duration-200">
+              <i class="pi pi-phone text-xs" />
+              {{ contactPhone }}
+            </a>
+          </div>
         </div>
 
         <!-- Links -->
@@ -25,6 +35,7 @@ const { appName, institutionName } = useSiteConfig()
           <h4 class="text-xs font-semibold tracking-widest uppercase text-white/40 mb-4">Explore</h4>
           <ul class="space-y-2.5 text-sm">
             <li v-for="link in [
+              { label: 'About School', to: '/about' },
               { label: 'Alumni Directory', to: '/directory' },
               { label: 'Events', to: '/events' },
               { label: 'News', to: '/news' },
@@ -60,7 +71,7 @@ const { appName, institutionName } = useSiteConfig()
           &copy; {{ new Date().getFullYear() }} {{ institutionName }}. All rights reserved.
         </p>
         <p class="text-xs text-white/20">
-          Powered by Alumni Portal
+          Powered by JAB Alumni Platform
         </p>
       </div>
     </div>

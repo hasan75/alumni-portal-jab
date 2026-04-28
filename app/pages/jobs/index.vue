@@ -5,7 +5,7 @@ import InputText from 'primevue/inputtext'
 
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
-useSeoMeta({ title: 'Job Board | Alumni Portal', description: 'Job opportunities posted by and for alumni.' })
+useSeoMeta({ title: 'Job Board | JAB Alumni', description: 'Job opportunities posted by and for alumni.' })
 
 const { fetchJobs, fetchCategories, totalCount } = useJobs()
 

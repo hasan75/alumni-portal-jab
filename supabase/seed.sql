@@ -10,13 +10,14 @@
 -- =============================================================================
 
 INSERT INTO app_config (key, value, description) VALUES
-  ('app_name', 'Alumni Portal', 'The name of this alumni association portal'),
-  ('institution_name', 'Your Institution', 'Full name of the institution'),
+  ('app_name', 'JAB Alumni', 'The name of this alumni association portal'),
+  ('institution_name', 'Janata Adarsha Bidyapith', 'Full name of the institution'),
   ('primary_color', '#2563EB', 'Primary brand color (hex)'),
   ('logo_url', '', 'URL to the institution logo'),
-  ('founded_year', '2000', 'Year the institution was founded'),
-  ('tagline', 'Connecting alumni across generations', 'Short tagline for the portal'),
+  ('founded_year', '1969', 'Year the institution was founded'),
+  ('tagline', 'Connecting the alumni of Janata Adarsha Bidyapith since 1969', 'Short tagline for the portal'),
   ('contact_email', '', 'Primary contact email for alumni inquiries'),
+  ('contact_phone', '', 'Primary contact phone number'),
   ('website_url', '', 'Official institution website URL')
 ON CONFLICT (key) DO NOTHING;
 

@@ -2,9 +2,14 @@ interface BaseTemplateOptions {
   appName: string
   siteUrl: string
   content: string
+  logoUrl?: string
 }
 
-function baseTemplate({ appName, siteUrl, content }: BaseTemplateOptions): string {
+function baseTemplate({ appName, siteUrl, content, logoUrl }: BaseTemplateOptions): string {
+  const logoHtml = logoUrl
+    ? `<img src="${logoUrl}" alt="${appName}" width="60" height="60" style="display:block;margin:0 auto 12px;border-radius:12px;width:60px;height:60px;object-fit:cover;" />`
+    : ''
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +24,7 @@ function baseTemplate({ appName, siteUrl, content }: BaseTemplateOptions): strin
 <!-- Header -->
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 <tr><td style="padding:0 0 24px;text-align:center;">
+  ${logoHtml}
   <span style="font-size:22px;font-weight:700;color:#2563EB;letter-spacing:-0.3px;">${appName}</span>
 </td></tr>
 </table>
@@ -48,7 +54,7 @@ function baseTemplate({ appName, siteUrl, content }: BaseTemplateOptions): strin
 </html>`
 }
 
-export function registrationConfirmationEmail(opts: { fullName: string, appName: string, siteUrl: string }): string {
+export function registrationConfirmationEmail(opts: { fullName: string, appName: string, siteUrl: string, logoUrl?: string }): string {
   const content = `
   <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">Application Received</h1>
   <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">Hi ${opts.fullName},</p>
@@ -67,10 +73,10 @@ export function registrationConfirmationEmail(opts: { fullName: string, appName:
   </td></tr>
   </table>`
 
-  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content, logoUrl: opts.logoUrl })
 }
 
-export function approvalEmail(opts: { fullName: string, appName: string, siteUrl: string }): string {
+export function approvalEmail(opts: { fullName: string, appName: string, siteUrl: string, logoUrl?: string }): string {
   const loginUrl = `${opts.siteUrl}/login`
   const content = `
   <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">Welcome Aboard!</h1>
@@ -91,10 +97,10 @@ export function approvalEmail(opts: { fullName: string, appName: string, siteUrl
     Or copy this link: <a href="${loginUrl}" style="color:#2563EB;text-decoration:none;">${loginUrl}</a>
   </p>`
 
-  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content, logoUrl: opts.logoUrl })
 }
 
-export function adminInviteEmail(opts: { fullName: string, appName: string, siteUrl: string, inviteLink: string }): string {
+export function adminInviteEmail(opts: { fullName: string, appName: string, siteUrl: string, inviteLink: string, logoUrl?: string }): string {
   const content = `
   <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">You've Been Invited!</h1>
   <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">Hi ${opts.fullName},</p>
@@ -121,10 +127,10 @@ export function adminInviteEmail(opts: { fullName: string, appName: string, site
   </td></tr>
   </table>`
 
-  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content, logoUrl: opts.logoUrl })
 }
 
-export function passwordResetEmail(opts: { fullName: string, appName: string, siteUrl: string, resetLink: string }): string {
+export function passwordResetEmail(opts: { fullName: string, appName: string, siteUrl: string, resetLink: string, logoUrl?: string }): string {
   const content = `
   <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#1e293b;letter-spacing:-0.3px;">Reset Your Password</h1>
   <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">Hi ${opts.fullName},</p>
@@ -148,10 +154,10 @@ export function passwordResetEmail(opts: { fullName: string, appName: string, si
   </td></tr>
   </table>`
 
-  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content, logoUrl: opts.logoUrl })
 }
 
-export function rejectionOrSuspensionEmail(opts: { fullName: string, appName: string, siteUrl: string, status: 'rejected' | 'suspended' }): string {
+export function rejectionOrSuspensionEmail(opts: { fullName: string, appName: string, siteUrl: string, status: 'rejected' | 'suspended', logoUrl?: string }): string {
   const isRejected = opts.status === 'rejected'
   const title = isRejected ? 'Application Update' : 'Account Suspended'
   const message = isRejected
@@ -172,5 +178,5 @@ export function rejectionOrSuspensionEmail(opts: { fullName: string, appName: st
   </td></tr>
   </table>`
 
-  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content })
+  return baseTemplate({ appName: opts.appName, siteUrl: opts.siteUrl, content, logoUrl: opts.logoUrl })
 }
