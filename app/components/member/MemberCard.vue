@@ -84,7 +84,7 @@ const hasSocialLinks = computed(() => {
       <div v-if="hasSocialLinks" class="flex items-center justify-center gap-2 mt-3">
         <a
           v-if="member.portfolio_url"
-          :href="member.portfolio_url"
+          :href="safeUrl(member.portfolio_url)"
           target="_blank"
           class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
           title="Portfolio"
@@ -94,7 +94,7 @@ const hasSocialLinks = computed(() => {
         </a>
         <a
           v-if="member.linkedin_url"
-          :href="member.linkedin_url"
+          :href="safeUrl(member.linkedin_url)"
           target="_blank"
           class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#0A66C2] hover:bg-blue-50 transition-all"
           title="LinkedIn"
@@ -104,7 +104,7 @@ const hasSocialLinks = computed(() => {
         </a>
         <a
           v-if="member.facebook_url"
-          :href="member.facebook_url"
+          :href="safeUrl(member.facebook_url)"
           target="_blank"
           class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#1877F2] hover:bg-blue-50 transition-all"
           title="Facebook"

@@ -509,7 +509,7 @@ async function saveSocialUrl(platformSlug: string) {
               <p class="font-medium text-slate-900 text-sm">{{ edu.institution }}</p>
               <p v-if="edu.degree || edu.field_of_study" class="text-xs text-slate-500">{{ [edu.degree, edu.field_of_study].filter(Boolean).join(' · ') }}</p>
               <p v-if="edu.start_year" class="text-xs text-slate-400">{{ edu.start_year }}{{ edu.end_year ? ` – ${edu.end_year}` : edu.is_current ? ' – Present' : '' }}</p>
-              <a v-if="edu.url" :href="edu.url" target="_blank" class="text-xs text-primary-600 hover:underline">{{ edu.url }}</a>
+              <a v-if="edu.url" :href="safeUrl(edu.url)" target="_blank" class="text-xs text-primary-600 hover:underline">{{ edu.url }}</a>
             </div>
           </div>
           <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -589,7 +589,7 @@ async function saveSocialUrl(platformSlug: string) {
               <p class="font-medium text-slate-900 text-sm">{{ work.job_title }}</p>
               <p class="text-xs text-slate-500">{{ work.company }}{{ work.location ? ` · ${work.location}` : '' }}</p>
               <p v-if="work.start_date" class="text-xs text-slate-400">{{ work.start_date }}{{ work.end_date ? ` – ${work.end_date}` : work.is_current ? ' – Present' : '' }}</p>
-              <a v-if="work.url" :href="work.url" target="_blank" class="text-xs text-primary-600 hover:underline">{{ work.url }}</a>
+              <a v-if="work.url" :href="safeUrl(work.url)" target="_blank" class="text-xs text-primary-600 hover:underline">{{ work.url }}</a>
             </div>
           </div>
           <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

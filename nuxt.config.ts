@@ -55,6 +55,11 @@ export default defineNuxtConfig({
       callback: '/feed',
       exclude: ['/', '/directory', '/events/**', '/news/**', '/jobs/**', '/register', '/admin/login'],
     },
+    cookieOptions: {
+      maxAge: 60 * 60 * 24 * 7,
+      secure: !import.meta.dev,
+      sameSite: 'lax',
+    },
   },
 
   fonts: {

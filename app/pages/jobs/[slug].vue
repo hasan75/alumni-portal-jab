@@ -40,7 +40,7 @@ useSeoMeta({
           <div class="flex-1">
             <h1 class="text-2xl font-bold text-slate-900">{{ job.title }}</h1>
             <p class="text-slate-600 mt-1">
-              <a v-if="job.company_website" :href="job.company_website" target="_blank" class="hover:text-primary-600">
+              <a v-if="job.company_website" :href="safeUrl(job.company_website)" target="_blank" class="hover:text-primary-600">
                 {{ job.company }}
               </a>
               <span v-else>{{ job.company }}</span>
@@ -60,7 +60,7 @@ useSeoMeta({
         <div class="mt-4 flex gap-3">
           <a
             v-if="job.apply_url"
-            :href="job.apply_url"
+            :href="safeUrl(job.apply_url)"
             target="_blank"
             class="px-5 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
           >

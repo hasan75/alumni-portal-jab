@@ -599,7 +599,7 @@ async function approve() {
           <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :style="`background: ${socialPlatforms.find(p => p.slug === link.platform_slug)?.color || '#666'}15;`">
             <i :class="socialPlatforms.find(p => p.slug === link.platform_slug)?.icon || 'pi pi-link'" class="text-sm" :style="`color: ${socialPlatforms.find(p => p.slug === link.platform_slug)?.color || '#666'};`" />
           </div>
-          <a :href="link.url" target="_blank" class="text-sm text-primary-600 hover:underline truncate">{{ link.url }}</a>
+          <a :href="safeUrl(link.url)" target="_blank" class="text-sm text-primary-600 hover:underline truncate">{{ link.url }}</a>
         </div>
       </div>
     </template>

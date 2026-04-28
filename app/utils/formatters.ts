@@ -78,3 +78,10 @@ export function formatJobType(type: string): string {
   }
   return map[type] || type
 }
+
+export function safeUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  const trimmed = url.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return undefined
+}
