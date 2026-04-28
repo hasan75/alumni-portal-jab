@@ -33,7 +33,7 @@ export function useNews() {
 
     if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
     if (filters.featured) query = query.eq('is_featured', true)
-    if (filters.search) query = query.ilike('title', `%${filters.search}%`)
+    if (filters.search) query = query.ilike('title', `%${sanitizeSearchTerm(filters.search)}%`)
 
     query = query.order('published_at', { ascending: false }).range(from, to)
 
@@ -64,7 +64,7 @@ export function useNews() {
       .select('*, category:article_categories(*)', { count: 'exact' })
 
     if (filters.status) query = query.eq('status', filters.status)
-    if (filters.search) query = query.ilike('title', `%${filters.search}%`)
+    if (filters.search) query = query.ilike('title', `%${sanitizeSearchTerm(filters.search)}%`)
     if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
 
     query = query.order('created_at', { ascending: false }).range(from, to)

@@ -81,6 +81,10 @@ export default defineNuxtConfig({
     },
   },
 
+  image: {
+    domains: [new URL(process.env.SUPABASE_URL || 'https://placeholder.supabase.co').hostname],
+  },
+
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     resendApiKey: process.env.RESEND_API_KEY,

@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 import { serverSupabaseClient } from '#supabase/server'
+import { z } from 'zod'
+
+const schema = z.object({ ids: z.array(z.string().uuid()).min(1).max(50) })
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { ids } = body
 
-  if (!ids?.length) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing required fields' })
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid input' })
   }
+
+  const { ids } = parsed.data
 
   const userClient = await serverSupabaseClient(event)
   const { data: { user } } = await userClient.auth.getUser()
@@ -48,7 +53,7 @@ export default defineEventHandler(async (event) => {
     .in('id', ids)
 
   if (updateError) {
-    throw createError({ statusCode: 500, statusMessage: updateError.message })
+    throw createError({ statusCode: 500, statusMessage: 'Operation failed' })
   }
 
   const { data: members } = await adminSupabase

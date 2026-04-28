@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { serverSupabaseClient } from '#supabase/server'
 
+const rateLimitMap = new Map<string, { count: number, resetAt: number }>()
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { currentPassword, newPassword } = body
@@ -9,8 +11,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'All fields are required' })
   }
 
-  if (newPassword.length < 8) {
-    throw createError({ statusCode: 400, statusMessage: 'New password must be at least 8 characters' })
+  if (newPassword.length < 8 || newPassword.length > 128) {
+    throw createError({ statusCode: 400, statusMessage: 'Password must be 8–128 characters' })
   }
 
   const userClient = await serverSupabaseClient(event)
@@ -18,6 +20,21 @@ export default defineEventHandler(async (event) => {
 
   if (!user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
+  }
+
+  const now = Date.now()
+  const windowMs = import.meta.dev ? 5000 : 60000
+  const maxAttempts = 5
+  const entry = rateLimitMap.get(user.id)
+
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxAttempts) {
+      throw createError({ statusCode: 429, statusMessage: 'Too many attempts. Try again later.' })
+    }
+    entry.count++
+  }
+  else {
+    rateLimitMap.set(user.id, { count: 1, resetAt: now + windowMs })
   }
 
   const config = useRuntimeConfig()
@@ -48,6 +65,8 @@ export default defineEventHandler(async (event) => {
   if (signInError) {
     throw createError({ statusCode: 403, statusMessage: 'Current password is incorrect' })
   }
+
+  await adminSupabase.auth.signOut()
 
   const { error: updateError } = await adminSupabase.auth.admin.updateUserById(user.id, {
     password: newPassword,

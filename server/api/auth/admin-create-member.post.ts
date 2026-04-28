@@ -1,13 +1,30 @@
 import { createClient } from '@supabase/supabase-js'
 import { serverSupabaseClient } from '#supabase/server'
+import { z } from 'zod'
+
+const schema = z.object({
+  email: z.string().email().transform(v => v.toLowerCase().trim()),
+  full_name: z.string().min(2).max(100).trim(),
+  batch_year: z.number().int().min(1900).max(new Date().getFullYear()).nullish(),
+  phone: z.string().regex(/^\+?[\d\s\-()]{7,20}$/).nullish(),
+  student_id: z.string().max(50).nullish(),
+  department: z.string().max(100).nullish(),
+  degree: z.string().max(100).nullish(),
+  current_status: z.string().max(50).nullish(),
+  city: z.string().max(100).nullish(),
+  country: z.string().max(100).nullish(),
+  status: z.enum(['pending', 'active']).default('pending'),
+})
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { email, full_name, batch_year, student_id, phone, department, degree, current_status, city, country, status } = body
 
-  if (!email || !full_name) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing required fields' })
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid input' })
   }
+
+  const { email, full_name, batch_year, student_id, phone, department, degree, current_status, city, country, status } = parsed.data
 
   const userClient = await serverSupabaseClient(event)
   const { data: { user } } = await userClient.auth.getUser()
@@ -57,7 +74,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
   }
 
-  const memberStatus = status === 'pending' ? 'pending' : 'active'
+  const memberStatus = status
 
   const { error: profileError } = await adminSupabase
     .from('alumni_profiles')

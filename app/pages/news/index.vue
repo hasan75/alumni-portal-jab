@@ -2,7 +2,7 @@
 import ArticleCard from '~/components/news/ArticleCard.vue'
 import Select from 'primevue/select'
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 useSeoMeta({
   title: 'News | Alumni Portal',

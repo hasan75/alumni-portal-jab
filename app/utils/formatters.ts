@@ -85,3 +85,7 @@ export function safeUrl(url: string | null | undefined): string | undefined {
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   return undefined
 }
+
+export function sanitizeSearchTerm(term: string): string {
+  return term.replace(/[,.()]/g, '').slice(0, 200)
+}
