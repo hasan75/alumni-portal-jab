@@ -2,6 +2,7 @@
 import ArticleCard from '~/components/news/ArticleCard.vue'
 import EventCard from '~/components/events/EventCard.vue'
 import JobCard from '~/components/jobs/JobCard.vue'
+import StaffCard from '~/components/staff/StaffCard.vue'
 
 definePageMeta({ layout: 'default' })
 
@@ -17,6 +18,7 @@ useSeoMeta({
 const { fetchArticles } = useNews()
 const { fetchEvents } = useEvents()
 const { fetchJobs } = useJobs()
+const { fetchStaff } = useStaff()
 const { appName, institutionName, tagline } = useSiteConfig()
 
 const { data: articles } = await useAsyncData('home-articles', () =>
@@ -29,6 +31,10 @@ const { data: events } = await useAsyncData('home-events', () =>
 
 const { data: jobs } = await useAsyncData('home-jobs', () =>
   fetchJobs({ perPage: 4, featured: true }),
+)
+
+const { data: featuredStaff } = await useAsyncData('home-staff', () =>
+  fetchStaff({ featured: true, perPage: 6 }),
 )
 
 const steps = [
@@ -218,6 +224,22 @@ const testimonials = [
               Est. 1969 &nbsp;&middot;&nbsp; Palash, Narsingdi &nbsp;&middot;&nbsp; 1046+ Students
             </p>
           </div>
+        </div>
+      </section>
+
+      <!-- Teachers & Staff -->
+      <section v-if="featuredStaff && featuredStaff.length > 0" class="animate-fade-in-up">
+        <div class="flex items-end justify-between mb-8">
+          <div>
+            <p class="text-xs font-semibold tracking-widest uppercase text-primary-600 mb-2">Our School</p>
+            <h2 class="text-3xl font-semibold tracking-tight text-slate-900">Honourable Teachers & Staff</h2>
+          </div>
+          <NuxtLink to="/teachers" class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition-colors">
+            View all <i class="pi pi-arrow-right text-xs" />
+          </NuxtLink>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <StaffCard v-for="member in featuredStaff" :key="member.id" :member="member" />
         </div>
       </section>
 

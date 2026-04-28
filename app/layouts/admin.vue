@@ -37,6 +37,7 @@ const navSections = computed(() => [
       { label: 'Events', icon: 'pi pi-calendar-plus', to: '/admin/events' },
       { label: 'News', icon: 'pi pi-megaphone', to: '/admin/news' },
       { label: 'Jobs', icon: 'pi pi-briefcase', to: '/admin/jobs' },
+      { label: 'Staff', icon: 'pi pi-id-card', to: '/admin/staff' },
       { label: 'Feed Moderation', icon: 'pi pi-comments', to: '/admin/feed' },
     ],
   },

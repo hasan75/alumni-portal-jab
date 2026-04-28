@@ -59,14 +59,16 @@ const timeline = [
 ]
 
 const headmasters = [
-  { name: 'Mijanur Rahman Chowdhury', quals: 'B.A., B.Ed.', period: '01.10.1970 – 04.08.1989', role: 'Headmaster', current: false },
-  { name: 'Babu Shurja Mohan Dutta', quals: 'B.S.S., B.Ed.', period: '05.08.1989 – 02.09.1989', role: 'Headmaster (Acting)', current: false },
-  { name: 'M. A. Alim', quals: 'B.A., L.L.B.', period: '03.09.1989 – 31.12.1997', role: 'Headmaster', current: false },
-  { name: 'Abdul Wahab', quals: 'B.A., B.Ed.', period: '01.01.1998 – 10.10.1998', role: 'Headmaster', current: false },
-  { name: 'Kazi Mohammad Razi Uddin', quals: 'B.A., B.Ed.', period: '11.10.1998 – 16.01.2000', role: 'Headmaster', current: false },
-  { name: 'Md. Shahabuddin', quals: 'B.Sc., B.Ed.', period: '17.01.2000 – 05.11.2019', role: 'Headmaster', current: false },
-  { name: 'Md. Masud Khan', quals: 'M.S.S, B.Ed.', period: '06.11.2019 – present', role: 'Headmaster', current: true },
+  { name: 'Mijanur Rahman Chowdhury', quals: 'B.A., B.Ed.', period: '1970 – 1989', role: 'Headmaster', current: false, years: '~19 years', tenure: 19, ordinal: '1st' },
+  { name: 'Babu Shurja Mohan Dutta', quals: 'B.S.S., B.Ed.', period: '1989', role: 'Acting Headmaster', current: false, years: '~1 month', tenure: 0.1, ordinal: '2nd' },
+  { name: 'M. A. Alim', quals: 'B.A., L.L.B.', period: '1989 – 1997', role: 'Headmaster', current: false, years: '~8 years', tenure: 8, ordinal: '3rd' },
+  { name: 'Abdul Wahab', quals: 'B.A., B.Ed.', period: '1998', role: 'Headmaster', current: false, years: '~10 months', tenure: 0.8, ordinal: '4th' },
+  { name: 'Kazi Mohammad Razi Uddin', quals: 'B.A., B.Ed.', period: '1998 – 2000', role: 'Headmaster', current: false, years: '~1 year', tenure: 1.3, ordinal: '5th' },
+  { name: 'Md. Shahabuddin', quals: 'B.Sc., B.Ed.', period: '2000 – 2019', role: 'Headmaster', current: false, years: '~20 years', tenure: 20, ordinal: '6th' },
+  { name: 'Md. Masud Khan', quals: 'M.S.S, B.Ed.', period: '2019 – present', role: 'Headmaster', current: true, years: 'Since 2019', tenure: 6, ordinal: '7th' },
 ]
+
+const maxTenure = Math.max(...headmasters.map(h => h.tenure))
 
 const location = [
   { label: 'Village', value: 'Palash Baghpara' },
@@ -282,30 +284,71 @@ const community = [
             7 headmasters have guided the school across 55+ years of operation.
           </p>
         </div>
+        <!-- Current headmaster — full width -->
+        <div class="relative overflow-hidden rounded-[20px] mb-4 animate-fade-in-up delay-1 gradient-brand">
+          <div class="absolute top-0 right-0 w-56 h-56 rounded-full opacity-15 blur-3xl orb-primary" />
+          <div class="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10 blur-3xl orb-secondary" />
+          <div class="relative px-6 py-5 flex items-center gap-5">
+            <div class="w-14 h-14 shrink-0 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center">
+              <i class="pi pi-star-fill text-amber-300 text-lg" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-white/40 text-xs font-bold">7th</span>
+                <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full text-amber-200" style="background: rgba(251,191,36,0.2); border: 1px solid rgba(251,191,36,0.3);">
+                  Current Headmaster
+                </span>
+              </div>
+              <h3 class="text-lg font-semibold text-white tracking-tight">{{ headmasters[headmasters.length - 1].name }}</h3>
+              <p class="text-white/50 text-xs mt-0.5">{{ headmasters[headmasters.length - 1].quals }} &middot; {{ headmasters[headmasters.length - 1].role }}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-base font-bold text-white">{{ headmasters[headmasters.length - 1].years }}</p>
+              <p class="text-[10px] text-white/40">{{ headmasters[headmasters.length - 1].period }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Previous headmasters — grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div
-            v-for="(hm, i) in headmasters"
+            v-for="(hm, i) in [...headmasters].slice(0, -1).reverse()"
             :key="hm.name"
             class="glass relative overflow-hidden p-5 animate-fade-in-up"
-            :class="[`delay-${Math.min(i + 1, 6)}`, hm.current ? 'ring-2 ring-primary-400/50' : '']"
+            :class="[
+              `delay-${Math.min(i + 1, 6)}`,
+              hm.ordinal === '1st' ? 'ring-2 ring-amber-300/40' :
+              hm.tenure >= 15 ? 'ring-2 ring-emerald-300/40' : ''
+            ]"
           >
             <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/30 via-transparent to-transparent" />
             <div class="relative">
-              <div class="flex items-start justify-between mb-2">
-                <div>
-                  <h3 class="font-semibold text-slate-900 text-sm">{{ hm.name }}</h3>
-                  <p class="text-xs text-slate-500">{{ hm.quals }}</p>
+              <div class="flex items-start justify-between gap-2 mb-1">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span
+                    class="text-[10px] font-bold uppercase tracking-wide shrink-0"
+                    :class="[
+                      hm.ordinal === '1st' ? 'text-amber-500' :
+                      hm.tenure >= 15 ? 'text-emerald-500' :
+                      'text-slate-300'
+                    ]"
+                  >{{ hm.ordinal }}</span>
+                  <h3 class="font-semibold text-slate-900 text-base truncate">{{ hm.name }}</h3>
                 </div>
                 <span
-                  v-if="hm.current"
-                  class="shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-primary-100 text-primary-700"
-                >
-                  Current
-                </span>
+                  v-if="hm.role.includes('Acting')"
+                  class="shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md bg-amber-50 text-amber-600 border border-amber-200/60"
+                >Acting</span>
               </div>
-              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="text-slate-500">{{ hm.role }}</span>
-                <span class="text-slate-400 font-mono">{{ hm.period }}</span>
+              <p class="text-xs text-slate-400">{{ hm.quals }} &middot; {{ hm.role }}</p>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs text-slate-400">{{ hm.period }}</span>
+                <span
+                  class="text-sm font-bold tracking-tight"
+                  :class="[
+                    hm.tenure >= 15 ? 'text-emerald-600' : 'text-slate-600'
+                  ]"
+                >{{ hm.years }}</span>
               </div>
             </div>
           </div>

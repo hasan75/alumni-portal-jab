@@ -11,7 +11,8 @@ const mobileMenuOpen = ref(false)
 const userMenuOpen = ref(false)
 
 const publicNavItems = [
-  { label: 'About', icon: 'pi pi-info-circle', to: '/about' },
+  { label: 'About', icon: 'pi pi-building', to: '/about' },
+  { label: 'Teachers', icon: 'pi pi-id-card', to: '/teachers' },
   { label: 'Events', icon: 'pi pi-calendar', to: '/events' },
   { label: 'News', icon: 'pi pi-megaphone', to: '/news' },
   { label: 'Jobs', icon: 'pi pi-briefcase', to: '/jobs' },
@@ -20,6 +21,8 @@ const publicNavItems = [
 
 const memberNavItems = [
   { label: 'Feed', icon: 'pi pi-home', to: '/feed' },
+  { label: 'About', icon: 'pi pi-building', to: '/about' },
+  { label: 'Teachers', icon: 'pi pi-id-card', to: '/teachers' },
   { label: 'Directory', icon: 'pi pi-users', to: '/directory' },
   { label: 'Events', icon: 'pi pi-calendar', to: '/events' },
   { label: 'News', icon: 'pi pi-megaphone', to: '/news' },

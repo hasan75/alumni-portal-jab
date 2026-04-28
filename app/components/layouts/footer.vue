@@ -36,6 +36,7 @@ const { appName, institutionName, contactEmail, contactPhone } = useSiteConfig()
           <ul class="space-y-2.5 text-sm">
             <li v-for="link in [
               { label: 'About School', to: '/about' },
+              { label: 'Teachers & Staff', to: '/teachers' },
               { label: 'Alumni Directory', to: '/directory' },
               { label: 'Events', to: '/events' },
               { label: 'News', to: '/news' },

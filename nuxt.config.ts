@@ -53,7 +53,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/feed',
-      exclude: ['/', '/about', '/directory', '/events/**', '/news/**', '/jobs/**', '/register', '/admin/login'],
+      exclude: ['/', '/about', '/directory', '/events/**', '/news/**', '/jobs/**', '/teachers/**', '/register', '/admin/login'],
     },
     cookieOptions: {
       maxAge: 60 * 60 * 24 * 7,
