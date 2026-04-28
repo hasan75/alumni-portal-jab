@@ -17,6 +17,16 @@ export default defineNuxtRouteMiddleware(async () => {
     .single()
 
   if (!data) {
+    // Admin users don't have alumni_profiles — let them through
+    const { data: admin } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('id', user.id)
+      .eq('is_active', true)
+      .single()
+
+    if (admin) return
+
     return navigateTo('/login')
   }
 

@@ -18,7 +18,7 @@ if (!data.value && !pending.value) {
 }
 
 useSeoMeta({
-  title: computed(() => `${data.value?.profile.display_name || data.value?.profile.full_name || 'Profile'} | Alumni Portal`),
+  title: computed(() => `${data.value?.profile.display_name || data.value?.profile.full_name || 'Profile'} | JAB Alumni`),
 })
 </script>
 

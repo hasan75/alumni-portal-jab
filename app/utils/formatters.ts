@@ -79,6 +79,31 @@ export function formatJobType(type: string): string {
   return map[type] || type
 }
 
+export function formatDesignation(designation: string): string {
+  const map: Record<string, string> = {
+    headmaster: 'Headmaster',
+    assistant_headmaster: 'Assistant Headmaster',
+    senior_teacher: 'Senior Teacher',
+    assistant_teacher: 'Assistant Teacher',
+    physical_education_teacher: 'Physical Education Teacher',
+    librarian: 'Librarian',
+    office_assistant: 'Office Assistant',
+    night_guard: 'Night Guard',
+    peon: 'Peon / Attendant',
+  }
+  return map[designation] || designation
+}
+
+export function formatEmploymentStatus(status: string): string {
+  const map: Record<string, string> = {
+    current: 'Current',
+    left: 'Left Job',
+    retired: 'Retired',
+    deceased: 'Deceased',
+  }
+  return map[status] || status
+}
+
 export function safeUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined
   const trimmed = url.trim()

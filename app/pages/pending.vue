@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
-useSeoMeta({ title: 'Pending Approval | Alumni Portal', robots: 'noindex' })
+useSeoMeta({ title: 'Pending Approval | JAB Alumni', robots: 'noindex' })
 
 const supabase = useSupabaseClient()
 const { appName } = useSiteConfig()

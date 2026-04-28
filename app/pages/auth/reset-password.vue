@@ -5,7 +5,7 @@ import Message from 'primevue/message'
 definePageMeta({ layout: false })
 
 useSeoMeta({
-  title: 'Reset Password | Alumni Portal',
+  title: 'Reset Password | JAB Alumni',
   robots: 'noindex, nofollow',
 })
 
@@ -96,12 +96,12 @@ async function handleReset() {
       <!-- Logo -->
       <div class="text-center mb-8 animate-fade-in-up">
         <NuxtLink to="/" class="inline-flex items-center gap-3 group">
-          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white text-2xl font-bold shadow-xl border border-white/30 group-hover:scale-105 transition-transform duration-200">
-            A
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-xl border border-white/30 group-hover:scale-105 transition-transform duration-200">
+            <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-12 w-12 rounded-xl object-cover" />
           </div>
           <div class="text-left">
             <h1 class="text-xl font-semibold text-white tracking-tight">{{ appName }}</h1>
-            <p class="text-sm text-white/60">Alumni Portal</p>
+            <p class="text-sm text-white/60">Janata Adarsha Bidyapith</p>
           </div>
         </NuxtLink>
       </div>

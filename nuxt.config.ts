@@ -14,16 +14,16 @@ export default defineNuxtConfig({
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'Alumni Portal',
+      title: 'JAB Alumni',
       htmlAttrs: {
         lang: 'en',
       },
       meta: [
-        { name: 'description', content: 'Connect with your fellow alumni — directory, events, news, jobs, and more.' },
-        { name: 'author', content: 'Alumni Portal' },
+        { name: 'description', content: 'The official alumni network of Janata Adarsha Bidyapith (EIIN 112739), Palash, Narsingdi. Connect with batchmates, events, news, and more.' },
+        { name: 'author', content: 'JAB Alumni' },
         { name: 'theme-color', content: '#2563EB' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: 'Alumni Portal' },
+        { property: 'og:site_name', content: 'JAB Alumni' },
         { name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
@@ -53,7 +53,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/feed',
-      exclude: ['/', '/directory', '/events/**', '/news/**', '/jobs/**', '/register', '/admin/login'],
+      exclude: ['/', '/about', '/directory', '/events/**', '/news/**', '/jobs/**', '/teachers/**', '/register', '/admin/login'],
     },
     cookieOptions: {
       maxAge: 60 * 60 * 24 * 7,
@@ -88,15 +88,16 @@ export default defineNuxtConfig({
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     resendApiKey: process.env.RESEND_API_KEY,
-    resendFromEmail: process.env.RESEND_FROM_EMAIL || 'Alumni Portal <noreply@yourdomain.com>',
+    resendFromEmail: process.env.RESEND_FROM_EMAIL || 'JAB Alumni <noreply@yourdomain.com>',
     public: {
-      appName: process.env.NUXT_PUBLIC_APP_NAME || 'Alumni Portal',
+      appName: process.env.NUXT_PUBLIC_APP_NAME || 'JAB Alumni',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     },
   },
 
   routeRules: {
     '/': { prerender: true },
+    '/about': { prerender: true },
     '/news/**': { swr: 1800 },
     '/events/**': {},
     '/jobs/**': {},

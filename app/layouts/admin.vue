@@ -37,6 +37,7 @@ const navSections = computed(() => [
       { label: 'Events', icon: 'pi pi-calendar-plus', to: '/admin/events' },
       { label: 'News', icon: 'pi pi-megaphone', to: '/admin/news' },
       { label: 'Jobs', icon: 'pi pi-briefcase', to: '/admin/jobs' },
+      { label: 'Staff', icon: 'pi pi-id-card', to: '/admin/staff' },
       { label: 'Feed Moderation', icon: 'pi pi-comments', to: '/admin/feed' },
     ],
   },
@@ -127,26 +128,30 @@ onMounted(async () => {
 <template>
   <div class="min-h-screen gradient-brand-light">    <!-- Sidebar (Desktop) -->
     <aside
-      class="glass-sidebar fixed left-0 top-0 z-40 h-screen transition-all duration-300 hidden lg:block"
+      class="glass-sidebar fixed left-0 top-0 z-40 h-screen transition-all duration-300 hidden lg:block overflow-visible"
       :class="sidebarCollapsed ? 'w-16' : 'w-60'"
     >
       <!-- Logo -->
-      <div class="flex h-14 items-center justify-between px-3 border-b border-white/30">
+      <div class="flex h-14 items-center px-3 border-b border-white/30" :class="sidebarCollapsed ? 'justify-center' : ''">
         <NuxtLink v-if="!sidebarCollapsed" to="/admin/dashboard" class="flex items-center gap-2.5 group">
-          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold text-sm shadow-md shadow-primary-500/30 group-hover:scale-105 transition-transform duration-200">
-            A
-          </div>
+          <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-8 w-8 rounded-xl object-cover shadow-md shadow-primary-500/30 group-hover:scale-105 transition-transform duration-200" />
           <div>
             <p class="font-semibold text-slate-800 text-sm leading-tight tracking-tight">{{ appName }}</p>
             <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">Admin Panel</p>
           </div>
         </NuxtLink>
-        <div v-else class="w-full flex justify-center">
-          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold text-sm shadow-md shadow-primary-500/30">
-            A
-          </div>
-        </div>
+        <NuxtLink v-else to="/admin/dashboard">
+          <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-8 w-8 rounded-xl object-cover shadow-md shadow-primary-500/30" />
+        </NuxtLink>
       </div>
+
+      <!-- Floating collapse/expand toggle -->
+      <button
+        class="absolute top-4 -right-3 z-50 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:shadow-lg active:scale-90 transition-all duration-200"
+        @click="sidebarCollapsed = !sidebarCollapsed"
+      >
+        <i :class="sidebarCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" class="text-xs" />
+      </button>
 
       <!-- Navigation -->
       <nav class="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto">
@@ -210,13 +215,6 @@ onMounted(async () => {
             <i class="pi pi-external-link" />
             <span v-if="!sidebarCollapsed">View Site</span>
           </NuxtLink>
-          <button
-            class="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 hover:bg-slate-100/80 transition-all duration-200"
-            @click="sidebarCollapsed = !sidebarCollapsed"
-          >
-            <i :class="sidebarCollapsed ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'" />
-            <span v-if="!sidebarCollapsed">Collapse</span>
-          </button>
         </div>
       </nav>
     </aside>
@@ -228,17 +226,14 @@ onMounted(async () => {
       style="left: 0;"
     >
       <div class="flex items-center gap-3">
-        <Button
-          icon="pi pi-bars"
-          text
-          rounded
-          class="lg:hidden text-slate-600"
+        <button
+          class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100/80 transition-all duration-200"
           @click="mobileMenuOpen = true"
-        />
+        >
+          <i class="pi pi-bars" />
+        </button>
         <NuxtLink to="/admin/dashboard" class="lg:hidden flex items-center gap-2">
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold text-xs shadow-sm">
-            A
-          </div>
+          <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-7 w-7 rounded-lg object-cover shadow-sm" />
         </NuxtLink>
       </div>
 
@@ -260,9 +255,7 @@ onMounted(async () => {
     <Drawer v-model:visible="mobileMenuOpen" position="left" class="w-72" :show-close-icon="true">
       <template #header>
         <div class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white font-bold text-sm shadow-md shadow-primary-500/30">
-            A
-          </div>
+          <img src="/images/logo_jap.png" alt="JAB Alumni" class="h-8 w-8 rounded-xl object-cover shadow-md shadow-primary-500/30" />
           <div>
             <p class="font-semibold text-slate-900 tracking-tight">{{ appName }}</p>
             <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Admin Panel</p>

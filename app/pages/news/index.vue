@@ -5,9 +5,9 @@ import Select from 'primevue/select'
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 
 useSeoMeta({
-  title: 'News | Alumni Portal',
+  title: 'News | JAB Alumni',
   description: 'Alumni news, achievements, and announcements.',
-  ogTitle: 'News | Alumni Portal',
+  ogTitle: 'News | JAB Alumni',
   ogDescription: 'Alumni news, achievements, and announcements.',
   twitterCard: 'summary',
 })

@@ -1,20 +1,27 @@
 export function useSiteConfig() {
   const supabase = useSupabaseClient()
 
-  const config = ref<Record<string, string>>({})
+  const config = useState<Record<string, string>>('site-config', () => ({}))
   const loading = ref(false)
 
-  const appName = computed(() => config.value.app_name || 'Alumni Portal')
-  const institutionName = computed(() => config.value.institution_name || 'Your Institution')
+  const appName = computed(() => config.value.app_name || 'JAB Alumni')
+  const institutionName = computed(() => config.value.institution_name || 'Janata Adarsha Bidyapith')
   const primaryColor = computed(() => config.value.primary_color || '#2563EB')
   const logoUrl = computed(() => config.value.logo_url || '')
-  const tagline = computed(() => config.value.tagline || 'Connecting alumni across generations')
+  const tagline = computed(() => config.value.tagline || 'Connecting the alumni of Janata Adarsha Bidyapith since 1969')
+  const contactEmail = computed(() => config.value.contact_email || '')
+  const contactPhone = computed(() => config.value.contact_phone || '')
 
   async function fetchConfig() {
     loading.value = true
-    const { data, error } = await supabase.from('app_config').select('key, value')
-    if (!error && data) {
-      config.value = Object.fromEntries(data.map(row => [row.key, row.value || '']))
+    try {
+      const { data, error } = await supabase.from('app_config').select('key, value')
+      if (!error && data) {
+        config.value = Object.fromEntries(data.map(row => [row.key, row.value || '']))
+      }
+    }
+    catch {
+      // Supabase unavailable during prerender/build — fallbacks will be used
     }
     loading.value = false
   }
@@ -47,6 +54,8 @@ export function useSiteConfig() {
     primaryColor,
     logoUrl,
     tagline,
+    contactEmail,
+    contactPhone,
     fetchConfig,
     updateConfig,
     updateMultiple,

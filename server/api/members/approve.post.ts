@@ -76,6 +76,8 @@ export default defineEventHandler(async (event) => {
 
   const appName = config.public.appName as string
   const siteUrl = config.public.siteUrl as string
+  const appConfig = await getAppConfig(adminSupabase)
+  const logoUrl = appConfig.logo_url || undefined
 
   const emailErrors: string[] = []
   if (members) {
@@ -83,7 +85,7 @@ export default defineEventHandler(async (event) => {
       const result = await sendEmail({
         to: member.email,
         subject: `Welcome to ${appName} — Your Account is Approved!`,
-        html: approvalEmail({ fullName: member.full_name, appName, siteUrl }),
+        html: approvalEmail({ fullName: member.full_name, appName, siteUrl, logoUrl }),
       })
       if (!result.success) emailErrors.push(`${member.email}: ${result.error}`)
     }))

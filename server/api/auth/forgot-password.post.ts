@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
   if (profile) {
     const appName = config.public.appName as string
     const siteUrl = config.public.siteUrl as string
+    const appConfig = await getAppConfig(adminSupabase)
+    const logoUrl = appConfig.logo_url || undefined
 
     const { data: linkData } = await adminSupabase.auth.admin.generateLink({
       type: 'recovery',
@@ -50,7 +52,7 @@ export default defineEventHandler(async (event) => {
       await sendEmail({
         to: normalizedEmail,
         subject: `${appName} — Reset Your Password`,
-        html: passwordResetEmail({ fullName: profile.full_name, appName, siteUrl, resetLink }),
+        html: passwordResetEmail({ fullName: profile.full_name, appName, siteUrl, resetLink, logoUrl }),
       })
     }
   }

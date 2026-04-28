@@ -112,12 +112,14 @@ export default defineEventHandler(async (event) => {
 
   const appName = config.public.appName as string
   const siteUrl = config.public.siteUrl as string
+  const appConfig = await getAppConfig(adminSupabase)
+  const logoUrl = appConfig.logo_url || undefined
 
   if (inviteLink) {
     await sendEmail({
       to: email,
       subject: `You've been invited to ${appName}`,
-      html: adminInviteEmail({ fullName: full_name, appName, siteUrl, inviteLink }),
+      html: adminInviteEmail({ fullName: full_name, appName, siteUrl, inviteLink, logoUrl }),
     })
   }
 

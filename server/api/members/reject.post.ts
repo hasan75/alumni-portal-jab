@@ -72,10 +72,12 @@ export default defineEventHandler(async (event) => {
   if (member) {
     const appName = config.public.appName as string
     const siteUrl = config.public.siteUrl as string
+    const appConfig = await getAppConfig(adminSupabase)
+    const logoUrl = appConfig.logo_url || undefined
     await sendEmail({
       to: member.email,
       subject: `${appName} — Application Update`,
-      html: rejectionOrSuspensionEmail({ fullName: member.full_name, appName, siteUrl, status: 'rejected' }),
+      html: rejectionOrSuspensionEmail({ fullName: member.full_name, appName, siteUrl, status: 'rejected', logoUrl }),
     })
   }
 

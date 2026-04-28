@@ -15,6 +15,7 @@ const form = reactive({
   logo_url: '',
   tagline: '',
   contact_email: '',
+  contact_phone: '',
   website_url: '',
   founded_year: '',
 })
@@ -30,6 +31,7 @@ onMounted(async () => {
     logo_url: config.value.logo_url || '',
     tagline: config.value.tagline || '',
     contact_email: config.value.contact_email || '',
+    contact_phone: config.value.contact_phone || '',
     website_url: config.value.website_url || '',
     founded_year: config.value.founded_year || '',
   })
@@ -44,6 +46,7 @@ async function save() {
     logo_url: form.logo_url,
     tagline: form.tagline,
     contact_email: form.contact_email,
+    contact_phone: form.contact_phone,
     website_url: form.website_url,
     founded_year: form.founded_year,
   })
@@ -70,7 +73,7 @@ async function save() {
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Portal Name</label>
-          <InputText v-model="form.app_name" class="w-full" placeholder="Alumni Portal" />
+          <InputText v-model="form.app_name" class="w-full" placeholder="JAB Alumni" />
           <p class="text-xs text-slate-500 mt-1">Shown in the header and browser title</p>
         </div>
 
@@ -84,18 +87,30 @@ async function save() {
           <InputText v-model="form.tagline" class="w-full" placeholder="Connecting alumni across generations" />
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Primary Color</label>
-          <div class="flex items-center gap-3">
-            <input v-model="form.primary_color" type="color" class="w-12 h-10 rounded border border-slate-200 cursor-pointer">
-            <InputText v-model="form.primary_color" class="flex-1" placeholder="#2563EB" />
+        <div class="opacity-50">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <label class="block text-sm font-medium text-slate-700">Primary Color</label>
+            <i class="pi pi-lock text-[10px] text-slate-400" />
           </div>
-          <p class="text-xs text-slate-500 mt-1">Used for buttons, links, and accents throughout the site</p>
+          <div class="flex items-center gap-3 pointer-events-none">
+            <input v-model="form.primary_color" type="color" class="w-12 h-10 rounded border border-slate-200 cursor-not-allowed" disabled>
+            <InputText v-model="form.primary_color" class="flex-1" placeholder="#2563EB" disabled />
+          </div>
+          <p class="text-xs text-slate-400 mt-1"><i class="pi pi-info-circle text-[10px]" /> This field is locked and managed via theme configuration</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Logo URL</label>
-          <InputText v-model="form.logo_url" class="w-full" placeholder="https://..." />
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">School Logo</label>
+          <SharedImageUpload
+            v-model="form.logo_url"
+            bucket="news"
+            path="branding"
+            :max-size-mb="2"
+            aspect-ratio="1/1"
+            placeholder="Upload school logo"
+            compact
+          />
+          <p class="text-xs text-slate-500 mt-1">Displayed in emails sent to members</p>
         </div>
       </div>
 
@@ -105,7 +120,11 @@ async function save() {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Contact Email</label>
-            <InputText v-model="form.contact_email" type="email" class="w-full" />
+            <InputText v-model="form.contact_email" type="email" class="w-full" placeholder="info@example.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Contact Phone</label>
+            <InputText v-model="form.contact_phone" class="w-full" placeholder="+880 1XXX-XXXXXX" />
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Website URL</label>

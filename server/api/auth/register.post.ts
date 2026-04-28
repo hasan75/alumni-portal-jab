@@ -84,10 +84,12 @@ export default defineEventHandler(async (event) => {
 
   const appName = config.public.appName as string
   const siteUrl = config.public.siteUrl as string
+  const appConfig = await getAppConfig(adminSupabase)
+  const logoUrl = appConfig.logo_url || undefined
   await sendEmail({
     to: email,
     subject: `${appName} — Registration Received`,
-    html: registrationConfirmationEmail({ fullName: full_name, appName, siteUrl }),
+    html: registrationConfirmationEmail({ fullName: full_name, appName, siteUrl, logoUrl }),
   })
 
   return { success: true, message: 'Registration submitted. Awaiting admin approval.' }

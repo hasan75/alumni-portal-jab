@@ -24,7 +24,7 @@ if (user.value && event.value) {
 }
 
 useSeoMeta({
-  title: computed(() => `${event.value?.title || 'Event'} | Alumni Portal`),
+  title: computed(() => `${event.value?.title || 'Event'} | JAB Alumni`),
   description: computed(() => event.value?.description || ''),
 })
 </script>
