@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
     .select('id')
     .eq('id', user.id)
     .eq('is_active', true)
+    .eq('role', 'admin')
     .single()
 
   if (!adminCheck) {

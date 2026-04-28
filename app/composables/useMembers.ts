@@ -27,9 +27,8 @@ export function useMembers() {
     const to = from + perPage - 1
 
     let query = supabase
-      .from('alumni_profiles')
+      .from('alumni_directory_view')
       .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, linkedin_url, facebook_url, portfolio_url, city, country, is_verified', { count: 'exact' })
-      .eq('status', 'active')
 
     if (filters.search) {
       query = query.or(`full_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%,featured_work_summary.ilike.%${filters.search}%`)
@@ -101,7 +100,7 @@ export function useMembers() {
 
   async function fetchProfileWithDetails(id: string) {
     const [profileResult, educationResult, workResult] = await Promise.all([
-      supabase.from('alumni_profiles').select('*').eq('id', id).single(),
+      supabase.from('alumni_directory_view').select('*').eq('id', id).single(),
       supabase.from('alumni_education').select('*').eq('alumni_id', id).order('start_year', { ascending: false }),
       supabase.from('alumni_work_experience').select('*').eq('alumni_id', id).order('start_date', { ascending: false }),
     ])
