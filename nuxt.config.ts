@@ -91,6 +91,6 @@ export default defineNuxtConfig({
     '/news/**': { swr: 1800 },
     '/events/**': { swr: 900 },
     '/jobs/**': { swr: 1800 },
-    '/api/**': { cors: true },
+    '/api/**': { cors: false },
   },
 })
