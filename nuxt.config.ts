@@ -87,8 +87,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    resendApiKey: process.env.RESEND_API_KEY,
-    resendFromEmail: process.env.RESEND_FROM_EMAIL || 'JAB Alumni <noreply@yourdomain.com>',
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'JAB Alumni',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',

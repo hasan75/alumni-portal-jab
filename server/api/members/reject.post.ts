@@ -43,12 +43,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Unauthorized' })
   }
 
-  const { data: member } = await adminSupabase
-    .from('alumni_profiles')
-    .select('email, full_name')
-    .eq('id', id)
-    .single()
-
   const { error: updateError } = await adminSupabase
     .from('alumni_profiles')
     .update({ status: 'rejected' })
@@ -68,18 +62,6 @@ export default defineEventHandler(async (event) => {
     changedFields: ['status'],
     description: `Rejected member ${id}`,
   })
-
-  if (member) {
-    const appName = config.public.appName as string
-    const siteUrl = config.public.siteUrl as string
-    const appConfig = await getAppConfig(adminSupabase)
-    const logoUrl = appConfig.logo_url || undefined
-    await sendEmail({
-      to: member.email,
-      subject: `${appName} — Application Update`,
-      html: rejectionOrSuspensionEmail({ fullName: member.full_name, appName, siteUrl, status: 'rejected', logoUrl }),
-    })
-  }
 
   return { success: true }
 })
