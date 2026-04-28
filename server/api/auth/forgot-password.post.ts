@@ -28,33 +28,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const adminSupabase = createClient(supabaseUrl, serviceKey)
+  const siteUrl = config.public.siteUrl as string
 
   const { data: profile } = await adminSupabase
     .from('alumni_profiles')
-    .select('full_name')
+    .select('id')
     .eq('email', normalizedEmail)
     .single()
 
   if (profile) {
-    const appName = config.public.appName as string
-    const siteUrl = config.public.siteUrl as string
-    const appConfig = await getAppConfig(adminSupabase)
-    const logoUrl = appConfig.logo_url || undefined
-
-    const { data: linkData } = await adminSupabase.auth.admin.generateLink({
-      type: 'recovery',
-      email: normalizedEmail,
-      options: { redirectTo: `${siteUrl}/auth/confirm` },
+    await adminSupabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${siteUrl}/auth/reset-password`,
     })
-
-    const resetLink = linkData?.properties?.action_link
-    if (resetLink) {
-      await sendEmail({
-        to: normalizedEmail,
-        subject: `${appName} — Reset Your Password`,
-        html: passwordResetEmail({ fullName: profile.full_name, appName, siteUrl, resetLink, logoUrl }),
-      })
-    }
   }
 
   return { success: true, message: 'If an account with that email exists, a password reset link has been sent.' }

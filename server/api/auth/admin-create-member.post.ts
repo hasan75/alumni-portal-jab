@@ -55,10 +55,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Unauthorized' })
   }
 
-  const { data: linkData, error: inviteError } = await adminSupabase.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: { data: { full_name } },
+  const { data: inviteData, error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
+    data: { full_name },
   })
 
   if (inviteError) {
@@ -68,8 +66,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: inviteError.message })
   }
 
-  const userId = linkData.user?.id
-  const inviteLink = linkData.properties?.action_link
+  const userId = inviteData.user?.id
   if (!userId) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
   }
@@ -109,19 +106,6 @@ export default defineEventHandler(async (event) => {
     newValues: { email, full_name, status: memberStatus },
     description: `Created member ${email} via admin invite`,
   })
-
-  const appName = config.public.appName as string
-  const siteUrl = config.public.siteUrl as string
-  const appConfig = await getAppConfig(adminSupabase)
-  const logoUrl = appConfig.logo_url || undefined
-
-  if (inviteLink) {
-    await sendEmail({
-      to: email,
-      subject: `You've been invited to ${appName}`,
-      html: adminInviteEmail({ fullName: full_name, appName, siteUrl, inviteLink, logoUrl }),
-    })
-  }
 
   return { success: true, message: 'Member created. An invite email has been sent.' }
 })

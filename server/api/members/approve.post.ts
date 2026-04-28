@@ -69,27 +69,5 @@ export default defineEventHandler(async (event) => {
     }),
   ))
 
-  const { data: members } = await adminSupabase
-    .from('alumni_profiles')
-    .select('email, full_name')
-    .in('id', ids)
-
-  const appName = config.public.appName as string
-  const siteUrl = config.public.siteUrl as string
-  const appConfig = await getAppConfig(adminSupabase)
-  const logoUrl = appConfig.logo_url || undefined
-
-  const emailErrors: string[] = []
-  if (members) {
-    await Promise.all(members.map(async (member) => {
-      const result = await sendEmail({
-        to: member.email,
-        subject: `Welcome to ${appName} — Your Account is Approved!`,
-        html: approvalEmail({ fullName: member.full_name, appName, siteUrl, logoUrl }),
-      })
-      if (!result.success) emailErrors.push(`${member.email}: ${result.error}`)
-    }))
-  }
-
-  return { success: true, approvedCount: ids.length, emailErrors: emailErrors.length ? emailErrors : undefined }
+  return { success: true, approvedCount: ids.length }
 })
