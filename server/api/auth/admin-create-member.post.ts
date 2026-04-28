@@ -100,6 +100,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create profile' })
   }
 
+  await writeAuditLog(adminSupabase, event, {
+    userId: user.id,
+    userEmail: user.email,
+    action: 'create',
+    tableName: 'alumni_profiles',
+    recordId: userId,
+    newValues: { email, full_name, status: memberStatus },
+    description: `Created member ${email} via admin invite`,
+  })
+
   const appName = config.public.appName as string
   const siteUrl = config.public.siteUrl as string
 

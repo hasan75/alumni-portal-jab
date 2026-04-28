@@ -58,6 +58,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Operation failed' })
   }
 
+  await writeAuditLog(adminSupabase, event, {
+    userId: user.id,
+    userEmail: user.email,
+    action: 'update',
+    tableName: 'alumni_profiles',
+    recordId: id,
+    newValues: { status: 'rejected' },
+    changedFields: ['status'],
+    description: `Rejected member ${id}`,
+  })
+
   if (member) {
     const appName = config.public.appName as string
     const siteUrl = config.public.siteUrl as string

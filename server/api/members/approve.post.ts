@@ -56,6 +56,19 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Operation failed' })
   }
 
+  await Promise.all(ids.map(id =>
+    writeAuditLog(adminSupabase, event, {
+      userId: user.id,
+      userEmail: user.email,
+      action: 'update',
+      tableName: 'alumni_profiles',
+      recordId: id,
+      newValues: { status: 'active' },
+      changedFields: ['status', 'approved_by', 'approved_at'],
+      description: `Approved member ${id}`,
+    }),
+  ))
+
   const { data: members } = await adminSupabase
     .from('alumni_profiles')
     .select('email, full_name')
