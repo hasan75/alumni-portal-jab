@@ -3,7 +3,7 @@ import AlumniPreset from './app/presets/alumni.js'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: import.meta.dev },
 
   css: [
     './app/assets/css/main.css',

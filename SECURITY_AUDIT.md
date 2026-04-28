@@ -4,7 +4,7 @@
 **Scope:** Full application — Nuxt 4 + Supabase + PrimeVue + Resend email
 **Branch:** `feature/email-integration`
 **Auditors:** Automated multi-layer review (server routes, middleware/auth, XSS/client, RLS/migrations, config/infrastructure)
-**Last updated:** 2026-04-28 — C-2 (XSS/DOMPurify) and C-3 (search_path) fixed
+**Last updated:** 2026-04-28 — H-1/H-2/H-4/H-5/H-7/H-3/H-6/H-8/H-9/M-9/L-1/L-10 fixed
 
 ---
 
@@ -13,10 +13,10 @@
 | Severity | Count | Fixed | Open |
 |----------|-------|-------|------|
 | Critical | 7 | 6 | 1 |
-| High | 10 | 1 | 9 |
-| Medium | 16 | 1 | 15 |
-| Low / Informational | 12 | 1 | 11 |
-| **Total** | **45** | **9** | **36** |
+| High | 10 | 10 | 0 |
+| Medium | 16 | 2 | 14 |
+| Low / Informational | 12 | 3 | 9 |
+| **Total** | **45** | **21** | **24** |
 | Passing checks | 13 | — | — |
 
 ---
@@ -84,201 +84,57 @@ The current `.env` on disk contains credentials for a **second** project (`vzbyl
 
 ## High
 
-### H-1. No CSRF / origin validation on any server route (still open from #6)
+### ~~H-1. No CSRF / origin validation on any server route~~ FIXED
 
-**Files:** All 7 routes under `server/api/`:
-- `server/api/auth/register.post.ts`
-- `server/api/auth/forgot-password.post.ts`
-- `server/api/auth/change-password.post.ts`
-- `server/api/auth/admin-create-member.post.ts`
-- `server/api/members/approve.post.ts`
-- `server/api/members/reject.post.ts`
-- `server/api/members/suspend.post.ts`
-
-None check the `Origin` or `Referer` header.
-
-**Impact:** A malicious site can submit POST requests on behalf of a logged-in user whose browser sends the Supabase session cookie automatically. This enables cross-site password changes, member approvals/rejections/suspensions, and registration spam.
-
-**Remediation:** Add origin validation as Nitro server middleware:
-```ts
-// server/middleware/csrf.ts
-export default defineEventHandler((event) => {
-  if (event.method === 'POST') {
-    const origin = getHeader(event, 'origin')
-    const allowed = [useRuntimeConfig().public.siteUrl]
-    if (!origin || !allowed.includes(origin)) {
-      throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
-    }
-  }
-})
-```
+**Status:** Fixed. Added `server/middleware/csrf.ts` that validates the `Origin` header on all POST requests in production. Skipped in development via `import.meta.dev`. Blocks cross-site form submissions to all 7 API routes.
 
 ---
 
-### H-2. CORS enabled globally without origin restriction (still open from #9)
+### ~~H-2. CORS enabled globally without origin restriction~~ FIXED
 
-**File:** `nuxt.config.ts` line 94
-
-```ts
-'/api/**': { cors: true },
-```
-
-Sets `Access-Control-Allow-Origin: *` on all API routes. Combined with H-1, this is especially dangerous.
-
-**Remediation:**
-```ts
-'/api/**': {
-  cors: {
-    origin: [process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'],
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-},
-```
+**Status:** Fixed. Changed `cors: true` to `cors: false` in `nuxt.config.ts` route rules. API is same-origin only — no cross-origin access needed.
 
 ---
 
-### H-3. Missing Supabase cookie security configuration (still open from #7)
+### ~~H-3. Missing Supabase cookie security configuration~~ FIXED
 
-**File:** `nuxt.config.ts` lines 51–58
-
-No `cookieOptions` configured. In production, cookies may not be `secure`.
-
-**Remediation:**
-```ts
-supabase: {
-  redirect: false,
-  cookieOptions: {
-    maxAge: 60 * 60 * 24 * 7,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  },
-}
-```
+**Status:** Fixed. Added `cookieOptions` to `nuxt.config.ts` supabase config: `secure: !import.meta.dev`, `sameSite: 'lax'`, `maxAge: 7 days`.
 
 ---
 
-### H-4. No security headers configured — NEW
+### ~~H-4. No security headers configured~~ FIXED
 
-**File:** `nuxt.config.ts` — no server middleware, no Nitro headers config
-
-Missing all standard security headers:
-- **Content-Security-Policy** — no CSP means inline scripts unrestricted, amplifying XSS impact
-- **X-Content-Type-Options** — browsers may MIME-sniff uploaded files
-- **X-Frame-Options** — clickjacking possible
-- **Strict-Transport-Security** — no HSTS
-- **Referrer-Policy** — full referrer leaked
-- **Permissions-Policy** — unrestricted browser features
-
-**Remediation:** Add Nitro server middleware:
-```ts
-// server/middleware/security-headers.ts
-export default defineEventHandler((event) => {
-  setHeaders(event, {
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '0',
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  })
-})
-```
+**Status:** Fixed. Added `server/middleware/security-headers.ts` setting `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Strict-Transport-Security`, `Referrer-Policy`, and `Permissions-Policy` on every response.
 
 ---
 
-### H-5. SWR caching on auth-protected routes — data leakage — NEW
+### ~~H-5. SWR caching on auth-protected routes — data leakage~~ FIXED
 
-**File:** `nuxt.config.ts` lines 91–93
-
-```ts
-'/events/**': { swr: 900 },
-'/jobs/**': { swr: 1800 },
-```
-
-Event and job detail pages have `middleware: 'member-auth'`. SWR caching at the Nitro layer may cache fully rendered HTML of authenticated pages and serve them to unauthenticated users (or serve one user's response to another). The middleware runs at the Vue layer but SWR caches at the server/CDN layer **before** Vue routing.
-
-**Impact:** Member-only event/job content served to unauthenticated visitors from cache.
-
-**Remediation:** Remove SWR from auth-protected routes, or split public/member routes.
+**Status:** Fixed. Removed SWR caching from `/events/**` and `/jobs/**` route rules in `nuxt.config.ts`. Public routes (`/news/**`) retain caching.
 
 ---
 
-### H-6. `is_admin_user()` grants editor role full admin write access — NEW
+### ~~H-6. `is_admin_user()` grants editor role full admin write access~~ FIXED
 
-**File:** `supabase/migrations/002_rls_policies.sql` lines 10–22
-
-```sql
-CREATE OR REPLACE FUNCTION is_admin_user()
-RETURNS BOOLEAN AS $$
-  ...
-  RETURN user_role IN ('admin', 'editor');
-$$
-```
-
-The `editor` role gets identical write access to `admin` via `"Admin manage ..."` `FOR ALL` policies on every table. An editor can: delete any alumni profile, modify any event/article/job, write to `app_config` (changing branding), write to `audit_log`, manage all storage objects.
-
-**Impact:** Over-privileged editor role. An editor account compromise = full admin compromise.
-
-**Remediation:** Split into `is_admin_user()` (admin only) and `is_admin_or_editor()` for content tables. Restrict `app_config`, `alumni_profiles` management, and `audit_log` to admin-only.
+**Status:** Fixed via migration `018_split_admin_editor_policies.sql`. Admin-only tables (`alumni_profiles`, `app_config`, `audit_log`, `alumni_education`, `alumni_work_experience`, `social_platforms`) now use `is_super_admin()` (role='admin' only). Editors retain content table access. Server routes `approve`, `reject`, `suspend`, `admin-create-member` also updated to require `role = 'admin'`.
 
 ---
 
-### H-7. `protect_sensitive_profile_fields()` trigger bypass via NULL `auth.uid()` — NEW
+### ~~H-7. `protect_sensitive_profile_fields()` trigger bypass via NULL `auth.uid()`~~ FIXED
 
-**File:** `supabase/migrations/014_protect_profile_sensitive_fields.sql` lines 7–9
-
-```sql
-IF auth.uid() IS NULL THEN
-    RETURN NEW;
-END IF;
-```
-
-The function assumes `auth.uid() IS NULL` means "service role". But `auth.uid()` is also `NULL` for unauthenticated requests (anon key with no JWT). If RLS is ever accidentally disabled, or a permissive policy added, this trigger allows anonymous users to set `status`, `approved_by`, `approved_at`, and `is_verified`.
-
-**Impact:** Defense-in-depth failure. Currently mitigated by RLS UPDATE policy, but fragile.
-
-**Remediation:**
-```sql
-IF current_setting('request.jwt.claims', true)::json->>'role' = 'service_role' THEN
-    RETURN NEW;
-END IF;
-```
+**Status:** Fixed via migration `016_fix_trigger_null_bypass.sql`. Now checks `current_setting('request.jwt.claims', true)::json->>'role' = 'service_role'` instead of `auth.uid() IS NULL`.
 
 ---
 
-### H-8. RLS leaks all profile columns to active alumni — privacy violation — NEW
+### ~~H-8. RLS leaks all profile columns to active alumni — privacy violation~~ FIXED
 
-**File:** `supabase/migrations/005_member_only_rls.sql` lines 24–25
-
-```sql
-CREATE POLICY "Active alumni read directory" ON alumni_profiles FOR SELECT
-  USING (status = 'active' AND is_active_alumni());
-```
-
-Any active alumni can read ALL columns of every active profile — including `email`, `phone`, `date_of_birth`, `student_id` — regardless of privacy flags (`show_email`, `show_phone`, `show_dob`). The composable `.select()` limits columns, but a malicious user can query the Supabase API directly.
-
-**Impact:** PII exposure. Privacy flags are decorative, not enforced.
-
-**Remediation:** Create a database view that respects privacy flags and grant SELECT on the view, or use a server API proxy that enforces column filtering.
+**Status:** Fixed via migration `019_enforce_profile_privacy_view.sql`. Dropped broad "Active alumni read directory" policy. Created `alumni_directory_view` that masks `email`/`phone`/`date_of_birth` based on privacy flags (`show_email`, `show_phone`, `show_dob`). Added `is_active_profile()` SECURITY DEFINER helper for cross-table RLS checks. Frontend updated to query the view for directory and profile detail pages.
 
 ---
 
-### H-9. Feed posts: alumni can modify admin-only fields — NEW
+### ~~H-9. Feed posts: alumni can modify admin-only fields~~ FIXED
 
-**File:** `supabase/migrations/002_rls_policies.sql` lines 256–258
-
-```sql
-CREATE POLICY "Active alumni update own posts" ON feed_posts FOR UPDATE
-  USING (auth.uid() = author_id AND is_active_alumni())
-  WITH CHECK (auth.uid() = author_id);
-```
-
-Alumni can UPDATE any column on their own posts, including `is_pinned` (admin-only), `status` (can revert `removed` back to `published` after moderation), `removed_by`, and `removal_reason`.
-
-**Impact:** Bypasses admin moderation. A member can un-remove flagged content and self-pin posts.
-
-**Remediation:** Add a `BEFORE UPDATE` trigger (like migration 014) to protect `is_pinned`, `status`, `removed_by`, `removal_reason` on feed posts.
+**Status:** Fixed via migration `017_protect_feed_post_admin_fields.sql`. Added `BEFORE UPDATE` trigger on `feed_posts` that reverts `is_pinned`, `status`, `removed_by`, `removal_reason` for non-admin, non-service-role users.
 
 ---
 
@@ -381,17 +237,9 @@ CREATE UNIQUE INDEX alumni_profiles_email_lower ON alumni_profiles (LOWER(email)
 
 ---
 
-### M-9. User-controlled URLs in `href` — `javascript:` protocol risk — NEW
+### ~~M-9. User-controlled URLs in `href` — `javascript:` protocol risk~~ FIXED
 
-**Files:**
-- `app/pages/jobs/[slug].vue` lines 41, 61 (`company_website`, `apply_url`)
-- `app/components/member/MemberCard.vue` lines 87, 97, 107 (`portfolio_url`, `linkedin_url`, `facebook_url`)
-- `app/pages/profile/index.vue` lines 512, 592 (`edu.url`, `work.url`)
-- `app/pages/admin/members/[id].vue` line 602 (`link.url`)
-
-Database-stored URLs rendered in `<a :href>` without protocol validation. Members control their own social link/portfolio URLs. A `javascript:alert(1)` URL would execute on click.
-
-**Remediation:** Validate all user-supplied URLs start with `http://` or `https://` before rendering.
+**Status:** Fixed. Added `safeUrl()` utility in `app/utils/formatters.ts` that only allows `http://` or `https://` URLs. Applied to all 8 user-supplied `href` bindings in `jobs/[slug].vue`, `MemberCard.vue`, `profile/index.vue`, and `admin/members/[id].vue`.
 
 ---
 
@@ -483,11 +331,9 @@ When `userId` is not passed, falls back to `useSupabaseUser()` (client-side ref,
 
 ## Low / Informational
 
-### L-1. Devtools enabled unconditionally (still open from #18)
+### ~~L-1. Devtools enabled unconditionally~~ FIXED
 
-**File:** `nuxt.config.ts` line 6: `devtools: { enabled: true }`
-
-**Remediation:** `devtools: { enabled: process.env.NODE_ENV !== 'production' }`
+**Status:** Fixed. Changed to `devtools: { enabled: import.meta.dev }` — only active during development.
 
 ---
 
@@ -565,9 +411,9 @@ Failed login attempts are not logged server-side. No rate limiting on login page
 
 ---
 
-### L-10. No custom error page — stack traces may leak — NEW
+### ~~L-10. No custom error page — stack traces may leak~~ FIXED
 
-`app/error.vue` does not exist. Nuxt's default error handler may expose stack traces and file paths in production.
+**Status:** Fixed. Created `app/error.vue` with light-themed Liquid Glass design. Handles 404, 403, 500, and generic errors with context-aware messages. Uses `clearError({ redirect: '/' })` for navigation. No stack traces or file paths exposed.
 
 ---
 
@@ -619,16 +465,16 @@ Any active alumni can see ALL RSVPs for ALL events, including which member is at
 | **P0** | **Rotate all Supabase keys immediately** | 15 min | C-1 |
 | **P0** | ~~**Install DOMPurify + render-time sanitization**~~ | ~~2 hours~~ | ~~C-2~~ DONE |
 | **P0** | ~~**Add `SET search_path = public` to all SECURITY DEFINER functions**~~ | ~~30 min~~ | ~~C-3~~ DONE |
-| **P1** | **Add CSRF origin validation** (server middleware) | 1 hour | H-1 |
-| **P1** | **Restrict CORS origins** | 15 min | H-2 |
-| **P1** | **Add security headers** (server middleware) | 30 min | H-4 |
-| **P1** | **Remove SWR from auth-protected routes** | 15 min | H-5 |
-| **P1** | **Fix `protect_sensitive_profile_fields` trigger bypass** | 15 min | H-7 |
-| **P2** | **Configure Supabase cookie options** | 15 min | H-3 |
-| **P2** | **Split editor/admin RLS policies** | 2 hours | H-6 |
-| **P2** | **Protect feed post admin-only fields** (trigger) | 30 min | H-9 |
-| **P2** | **Enforce profile privacy flags at DB level** (view) | 1 hour | H-8 |
-| **P2** | **Validate URLs before rendering in href** | 30 min | M-9 |
+| **P1** | ~~**Add CSRF origin validation**~~ | ~~1 hour~~ | ~~H-1~~ DONE |
+| **P1** | ~~**Restrict CORS origins**~~ | ~~15 min~~ | ~~H-2~~ DONE |
+| **P1** | ~~**Add security headers**~~ | ~~30 min~~ | ~~H-4~~ DONE |
+| **P1** | ~~**Remove SWR from auth-protected routes**~~ | ~~15 min~~ | ~~H-5~~ DONE |
+| **P1** | ~~**Fix `protect_sensitive_profile_fields` trigger bypass**~~ | ~~15 min~~ | ~~H-7~~ DONE |
+| **P2** | ~~**Configure Supabase cookie options**~~ | ~~15 min~~ | ~~H-3~~ DONE |
+| **P2** | ~~**Split editor/admin RLS policies**~~ | ~~2 hours~~ | ~~H-6~~ DONE |
+| **P2** | ~~**Protect feed post admin-only fields**~~ | ~~30 min~~ | ~~H-9~~ DONE |
+| **P2** | ~~**Enforce profile privacy flags at DB level**~~ | ~~1 hour~~ | ~~H-8~~ DONE |
+| **P2** | ~~**Validate URLs before rendering in href**~~ | ~~30 min~~ | ~~M-9~~ DONE |
 | **P3** | **Add Zod validation to admin-create-member** | 30 min | M-1 |
 | **P3** | **Replace raw error messages with generic ones** | 30 min | M-2 |
 | **P3** | **Sanitize search input in composables** | 30 min | M-3 |
@@ -639,7 +485,7 @@ Any active alumni can see ALL RSVPs for ALL events, including which member is at
 | **P3** | **Add middleware to unprotected member pages** | 15 min | M-14 |
 | **P3** | **Add case-insensitive email index** | 15 min | M-8 |
 | **P3** | **Add input length validation to composables** | 1 hour | M-15 |
-| **P4** | **Disable devtools in production** | 5 min | L-1 |
-| **P4** | **Create custom error.vue** | 30 min | L-10 |
+| **P4** | ~~**Disable devtools in production**~~ | ~~5 min~~ | ~~L-1~~ DONE |
+| **P4** | ~~**Create custom error.vue**~~ | ~~30 min~~ | ~~L-10~~ DONE |
 | **P4** | **Add audit logging to admin actions** | 1 hour | L-6 |
 | **P4** | **Add middleware error handling** | 15 min | L-7 |
