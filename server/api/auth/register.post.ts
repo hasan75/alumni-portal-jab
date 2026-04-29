@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const registrationSchema = z.object({
   email: z.string().email('Invalid email format').max(255).transform(v => v.toLowerCase().trim()),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  password: z.string().max(128, 'Password must not exceed 128 characters').superRefine(zodPasswordRefinement),
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100).transform(v => v.trim()),
   batch_year: z.number().int().min(1900).max(new Date().getFullYear()).nullable().optional(),
   student_id: z.string().max(50).nullable().optional(),
