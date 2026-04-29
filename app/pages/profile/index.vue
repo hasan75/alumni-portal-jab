@@ -116,13 +116,22 @@ const passwordForm = reactive({
   confirmPassword: '',
 })
 
+const passwordRules = [
+  (p: string) => p.length >= 8,
+  (p: string) => /[A-Z]/.test(p),
+  (p: string) => /[a-z]/.test(p),
+  (p: string) => /[0-9]/.test(p),
+  (p: string) => /[^A-Za-z0-9]/.test(p),
+]
+const isPasswordValid = computed(() => passwordRules.every(r => r(passwordForm.newPassword)))
+
 async function changePassword() {
   if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
     toast.add({ severity: 'warn', summary: 'Please fill in all password fields', life: 3000 })
     return
   }
-  if (passwordForm.newPassword.length < 8) {
-    toast.add({ severity: 'warn', summary: 'New password must be at least 8 characters', life: 3000 })
+  if (!isPasswordValid.value) {
+    toast.add({ severity: 'warn', summary: 'Password does not meet all requirements', life: 3000 })
     return
   }
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -697,12 +706,13 @@ async function saveSocialUrl(platformSlug: string) {
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">New Password</label>
             <Password
               v-model="passwordForm.newPassword"
-              :feedback="true"
+              :feedback="false"
               toggle-mask
               class="w-full"
               input-class="w-full"
               placeholder="Minimum 8 characters"
             />
+            <SharedPasswordStrengthMeter :password="passwordForm.newPassword" context="light" />
           </div>
           <div>
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Confirm New Password</label>

@@ -20,6 +20,15 @@ const success = ref(false)
 const tokenValid = ref(true)
 const checking = ref(true)
 
+const passwordRules = [
+  (p: string) => p.length >= 8,
+  (p: string) => /[A-Z]/.test(p),
+  (p: string) => /[a-z]/.test(p),
+  (p: string) => /[0-9]/.test(p),
+  (p: string) => /[^A-Za-z0-9]/.test(p),
+]
+const isPasswordValid = computed(() => passwordRules.every(r => r(newPassword.value)))
+
 onMounted(() => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
@@ -53,8 +62,8 @@ async function handleReset() {
     return
   }
 
-  if (newPassword.value.length < 8) {
-    error.value = 'Password must be at least 8 characters'
+  if (!isPasswordValid.value) {
+    error.value = 'Password does not meet all requirements'
     return
   }
 
@@ -176,12 +185,13 @@ async function handleReset() {
                 id="new-password"
                 v-model="newPassword"
                 placeholder="Minimum 8 characters"
-                :feedback="true"
+                :feedback="false"
                 toggle-mask
                 class="w-full"
                 input-class="w-full"
                 :disabled="loading"
               />
+              <SharedPasswordStrengthMeter :password="newPassword" context="dark" />
             </div>
 
             <div class="animate-fade-in-up delay-3">

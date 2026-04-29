@@ -11,8 +11,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'All fields are required' })
   }
 
-  if (newPassword.length < 8 || newPassword.length > 128) {
-    throw createError({ statusCode: 400, statusMessage: 'Password must be 8–128 characters' })
+  if (newPassword.length > 128) {
+    throw createError({ statusCode: 400, statusMessage: 'Password must not exceed 128 characters' })
+  }
+  const pwCheck = validatePassword(newPassword)
+  if (!pwCheck.valid) {
+    throw createError({ statusCode: 400, statusMessage: pwCheck.message! })
   }
 
   const userClient = await serverSupabaseClient(event)

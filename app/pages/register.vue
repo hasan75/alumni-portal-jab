@@ -30,6 +30,15 @@ const loading = ref(false)
 const error = ref('')
 const submitted = ref(false)
 
+const passwordRules = [
+  (p: string) => p.length >= 8,
+  (p: string) => /[A-Z]/.test(p),
+  (p: string) => /[a-z]/.test(p),
+  (p: string) => /[0-9]/.test(p),
+  (p: string) => /[^A-Za-z0-9]/.test(p),
+]
+const isPasswordValid = computed(() => passwordRules.every(r => r(form.password)))
+
 onMounted(async () => {
   const batchList = await fetchBatches()
   batches.value = batchList.map(b => ({ label: b.label || `Class of ${b.year}`, value: b.year }))
@@ -44,8 +53,8 @@ async function handleRegister() {
     error.value = 'Passwords do not match'
     return
   }
-  if (form.password.length < 8) {
-    error.value = 'Password must be at least 8 characters'
+  if (!isPasswordValid.value) {
+    error.value = 'Password does not meet all requirements'
     return
   }
   if (form.student_id && !form.batch_year) {
@@ -166,6 +175,7 @@ async function handleRegister() {
               />
             </div>
           </div>
+          <SharedPasswordStrengthMeter :password="form.password" context="dark" />
 
           <div class="animate-fade-in-up delay-3">
             <label class="block text-xs font-semibold tracking-wide uppercase text-white/60 mb-2">Graduation Year</label>
