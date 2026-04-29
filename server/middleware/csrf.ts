@@ -4,8 +4,11 @@ export default defineEventHandler((event) => {
   if (import.meta.dev) return
 
   const origin = getHeader(event, 'origin')
-  const allowed = [useRuntimeConfig().public.siteUrl]
-  if (!origin || !allowed.includes(origin)) {
+  if (!origin) return
+
+  const siteUrl = useRuntimeConfig().public.siteUrl
+  const allowed = [siteUrl.replace(/\/$/, '')]
+  if (!allowed.includes(origin.replace(/\/$/, ''))) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 })
