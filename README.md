@@ -7,9 +7,11 @@ A full-stack alumni network platform built with Nuxt 4, Supabase, and PrimeVue. 
 ## Features
 
 ### Public Site
-- **Homepage** with institution overview and quick links
+- **Homepage** with institution overview, featured articles, events, jobs, and staff
+- **About** page with institution information
 - **Events**, **News**, and **Jobs** listings with search, filtering, and detail pages
-- **Alumni Directory** browsable by batch year, department, and industry
+- **Teachers & Staff** directory showing featured current staff members
+- **Forgot Password** / reset password flow via email link
 
 ### Member Portal
 - **Social Feed** with general and batch-scoped posts, threaded comments, and reactions (like, love, celebrate, support)
@@ -18,11 +20,14 @@ A full-stack alumni network platform built with Nuxt 4, Supabase, and PrimeVue. 
 - **Member Directory** with detailed alumni profiles
 
 ### Admin Panel
-- **Member Management** with approval workflow (pending, active, suspended, rejected)
+- **Dashboard** with live stats (pending approvals, active members, upcoming events, open jobs, weekly posts) and quick actions
+- **Member Management** with approval workflow (pending, active, suspended, rejected) and bulk approve
 - **Content Management** for events, news articles, and job postings (create, edit, publish, archive)
 - **Feed Moderation** with removal reasons and post hiding
+- **Staff Management** for teachers and staff (designation, employment status, photo, featured toggle, sort order)
+- **Batch Management** to create and manage graduation year cohorts
+- **Audit Log** — tamper-evident trail of every create/update/delete across the system, filterable by action, user, and table
 - **Site Configuration** for branding (app name, logo, tagline, primary color)
-- **Dashboard** with pending approval counter and quick actions
 
 ### Security
 - **Row-Level Security (RLS)** on all Supabase tables
@@ -52,20 +57,24 @@ A full-stack alumni network platform built with Nuxt 4, Supabase, and PrimeVue. 
 
 ```
 app/
-  pages/              File-based routing (28 pages)
+  pages/              File-based routing (36 pages)
   layouts/            default.vue | member.vue | admin.vue
-  components/         Reusable Vue components (12 components)
+  components/         Reusable Vue components (16 components)
   middleware/         member-auth.ts | admin-auth.ts
-  composables/        useMembers, useFeed, useEvents, useNews, useJobs, useSiteConfig
+  composables/        useMembers, useFeed, useEvents, useNews, useJobs, useStaff,
+                      useAuditLog, useImageUpload, useSanitize, useSiteConfig
   stores/             auth.ts (Pinia store for alumni session)
-  types/              member.ts | event.ts | news.ts | job.ts | feed.ts
+  types/              member.ts | event.ts | news.ts | job.ts | feed.ts | staff.ts | audit.ts
   utils/              formatters.ts
   presets/            alumni.js (PrimeVue theme preset)
   assets/css/         main.css (Tailwind + Liquid Glass utilities)
 server/
-  api/auth/           register.post.ts (service role registration endpoint)
+  api/auth/           register.post.ts | forgot-password.post.ts |
+                      change-password.post.ts | admin-create-member.post.ts
+  api/feed/           posts.post.ts | comments.post.ts
+  api/members/        approve.post.ts | reject.post.ts | suspend.post.ts
 supabase/
-  migrations/         5 SQL migrations (schema, RLS, triggers, seed, member policies)
+  migrations/         22 SQL migrations (schema, RLS, triggers, storage, policies, and incremental patches)
   seed.sql            Initial seed data
 ```
 
@@ -119,6 +128,7 @@ Apply the SQL migrations in order from `supabase/migrations/` using the Supabase
 3. `003_functions_triggers.sql` &mdash; Database functions and denormalized counter triggers
 4. `004_seed_data.sql` &mdash; Initial seed data (batches, categories, config)
 5. `005_member_only_rls.sql` &mdash; Member-only access policies
+6–22. Incremental patches &mdash; storage buckets, slug triggers, staff members table, social URLs, privacy controls, audit log, and security hardening
 
 ### Run the Dev Server
 
@@ -150,9 +160,14 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 Public (no auth)          Member Portal (auth required)       Admin Panel (admin auth)
 ─────────────────         ──────────────────────────          ─────────────────────────
 /                         /feed                               /admin/dashboard
-/events, /news, /jobs     /profile                            /admin/members
-/directory                /directory/[id]                     /admin/events, news, jobs
-/login, /register         /events/[slug] (RSVP)              /admin/feed (moderation)
+/about                    /feed/batch/[year]                  /admin/members
+/events, /news, /jobs     /profile                            /admin/events
+/teachers                 /directory, /directory/[id]         /admin/news
+/login, /register         /events/[slug] (RSVP)              /admin/jobs
+/forgot-password          /jobs/[slug]                        /admin/feed (moderation)
+/auth/confirm             /news/[slug]                        /admin/staff
+/auth/reset-password                                          /admin/batches
+                                                              /admin/audit-log
                                                               /admin/settings
 ```
 
@@ -163,6 +178,7 @@ Each layer has its own layout and route middleware. Public pages use ISR/SWR cac
 - **Self-registration**: `POST /api/auth/register` creates a Supabase auth user and an `alumni_profiles` row with `status='pending'`. An admin must approve the member before they can access the portal.
 - **Member login**: Checks profile status. Pending users are redirected to `/pending`. Suspended or rejected users see an error.
 - **Admin login**: Verifies the user exists in the `admin_users` table with `is_active = true`.
+- **Forgot password**: `POST /api/auth/forgot-password` sends a reset link via Supabase Auth. The link lands on `/auth/confirm`, which redirects to `/auth/reset-password` where the user sets a new password via `POST /api/auth/change-password`.
 
 ### Data Layer
 
