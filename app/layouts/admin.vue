@@ -14,6 +14,7 @@ const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 
 const pendingCount = ref(0)
+const pendingJobsCount = ref(0)
 
 const navSections = computed(() => [
   {
@@ -37,6 +38,12 @@ const navSections = computed(() => [
       { label: 'Events', icon: 'pi pi-calendar-plus', to: '/admin/events' },
       { label: 'News', icon: 'pi pi-megaphone', to: '/admin/news' },
       { label: 'Jobs', icon: 'pi pi-briefcase', to: '/admin/jobs' },
+      {
+        label: 'Job Submissions',
+        icon: 'pi pi-clock',
+        to: '/admin/jobs?status=pending_review',
+        badge: pendingJobsCount.value > 0 ? String(pendingJobsCount.value) : undefined,
+      },
       { label: 'Staff', icon: 'pi pi-id-card', to: '/admin/staff' },
       { label: 'Feed Moderation', icon: 'pi pi-comments', to: '/admin/feed' },
     ],
@@ -74,8 +81,14 @@ function toggleUserMenu(event: Event) {
 
 function isActive(navTo: string) {
   const [navPath, navQuery] = navTo.split('?')
-  const currentPath = route.path
-  const currentQuery = route.query
+
+  // Use fullPath so query-only navigations trigger reactivity
+  const fullPath = route.fullPath
+  const qIdx = fullPath.indexOf('?')
+  const currentPath = qIdx === -1 ? fullPath : fullPath.slice(0, qIdx)
+  const currentQuery: Record<string, string> = {}
+  if (qIdx !== -1)
+    new URLSearchParams(fullPath.slice(qIdx + 1)).forEach((v, k) => { currentQuery[k] = v })
 
   if (navQuery) {
     if (currentPath !== navPath) return false
@@ -117,11 +130,12 @@ function navigateAndClose(to: string) {
 
 onMounted(async () => {
   const supabaseClient = useSupabaseClient()
-  const { count } = await supabaseClient
-    .from('alumni_profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'pending')
-  pendingCount.value = count || 0
+  const [members, jobs] = await Promise.all([
+    supabaseClient.from('alumni_profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabaseClient.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+  ])
+  pendingCount.value = members.count || 0
+  pendingJobsCount.value = jobs.count || 0
 })
 </script>
 

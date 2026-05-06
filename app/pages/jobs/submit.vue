@@ -230,7 +230,7 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto space-y-10">
+  <div class="max-w-5xl mx-auto space-y-10">
 
     <!-- ── Page header ──────────────────────────────────────────────────────── -->
     <div class="animate-fade-in-up">
@@ -352,7 +352,7 @@ function formatDate(iso: string): string {
             <SharedRichTextEditor
               id="job-description"
               v-model="form.description"
-              :height="250"
+              :height="400"
               :allow-images="false"
               bucket="jobs"
               storage-path="new"
@@ -367,7 +367,7 @@ function formatDate(iso: string): string {
             <SharedRichTextEditor
               id="job-requirements"
               v-model="form.requirements"
-              :height="200"
+              :height="320"
               :allow-images="false"
               bucket="jobs"
               storage-path="new"

@@ -47,10 +47,18 @@ export default defineEventHandler(async (event) => {
   })
 
   if (authError) {
-    if (authError.message.includes('already registered')) {
-      throw createError({ statusCode: 409, statusMessage: 'Registration failed. Please try again or sign in.' })
+    const msg = authError.message?.toLowerCase() ?? ''
+    const isDuplicate
+      = authError.status === 422
+      || msg.includes('already registered')
+      || msg.includes('already been registered')
+      || msg.includes('already exists')
+      || msg.includes('user already')
+    if (isDuplicate) {
+      throw createError({ statusCode: 409, statusMessage: 'An account with this email already exists. Please sign in instead.' })
     }
-    throw createError({ statusCode: 400, statusMessage: 'Registration failed' })
+    console.error('[register] auth.admin.createUser failed:', authError.status, authError.message)
+    throw createError({ statusCode: 400, statusMessage: authError.message || 'Registration failed' })
   }
 
   const userId = authData.user?.id

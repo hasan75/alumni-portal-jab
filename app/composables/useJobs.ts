@@ -144,8 +144,8 @@ export function useJobs() {
   }
 
   async function submitJob(job: Omit<Partial<Job>, 'status' | 'alumni_posted' | 'posted_by'>) {
-    const user = useSupabaseUser()
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
 
     const { data, error: insertError } = await supabase
       .from('jobs')
@@ -153,7 +153,7 @@ export function useJobs() {
         ...job,
         status: 'pending_review',
         alumni_posted: true,
-        posted_by: user.value.id,
+        posted_by: user.id,
       })
       .select()
       .single()
@@ -162,13 +162,13 @@ export function useJobs() {
   }
 
   async function fetchMySubmissions(): Promise<Job[]> {
-    const user = useSupabaseUser()
-    if (!user.value) return []
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
 
     const { data, error: fetchError } = await supabase
       .from('jobs')
       .select('*, category:job_categories(*)')
-      .eq('posted_by', user.value.id)
+      .eq('posted_by', user.id)
       .order('created_at', { ascending: false })
 
     if (fetchError) return []
@@ -176,14 +176,14 @@ export function useJobs() {
   }
 
   async function withdrawSubmission(id: number) {
-    const user = useSupabaseUser()
-    if (!user.value) return { success: false, error: 'Not authenticated' }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
 
     const { error: deleteError } = await supabase
       .from('jobs')
       .delete()
       .eq('id', id)
-      .eq('posted_by', user.value.id)
+      .eq('posted_by', user.id)
       .eq('status', 'pending_review')
 
     return { success: !deleteError, error: deleteError?.message }

@@ -8,8 +8,22 @@
 -- =============================================================================
 
 -- ── 1. Extend status CHECK constraint ────────────────────────────────────────
-ALTER TABLE jobs
-  DROP CONSTRAINT IF EXISTS jobs_status_check;
+-- Drop any existing status check (name varies by how Postgres auto-named it)
+DO $$
+DECLARE
+  con_name TEXT;
+BEGIN
+  SELECT conname INTO con_name
+  FROM pg_constraint
+  WHERE conrelid = 'jobs'::regclass
+    AND contype = 'c'
+    AND pg_get_constraintdef(oid) LIKE '%status%';
+
+  IF con_name IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE jobs DROP CONSTRAINT %I', con_name);
+  END IF;
+END;
+$$;
 
 ALTER TABLE jobs
   ADD CONSTRAINT jobs_status_check
