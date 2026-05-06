@@ -14,6 +14,9 @@ const isNew = id === 'new'
 const { saveJob, fetchCategories } = useJobs()
 const user = useSupabaseUser()
 const toast = useToast()
+const supabaseClient = useSupabaseClient()
+
+const submitter = ref<{ full_name: string, batch_year: number | null } | null>(null)
 
 useSeoMeta({ title: isNew ? 'New Job | Admin' : 'Edit Job | Admin', robots: 'noindex' })
 
@@ -46,28 +49,66 @@ const form = reactive({
   status: 'draft',
   is_featured: false,
   alumni_posted: false,
+  additional_photos: [] as string[],
 })
 
 const jobTypes = ['full_time', 'part_time', 'contract', 'internship', 'freelance'].map(t => ({
   label: t.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
   value: t,
 }))
-const statuses = ['draft', 'published', 'closed', 'archived'].map(s => ({ label: s.charAt(0).toUpperCase() + s.slice(1), value: s }))
+const statuses = ['draft', 'published', 'closed', 'archived', 'pending_review'].map(s => ({
+  label: s === 'pending_review' ? 'Pending Review' : s.charAt(0).toUpperCase() + s.slice(1),
+  value: s,
+}))
 
 onMounted(async () => {
   const cats = await fetchCategories()
   categories.value = cats.map(c => ({ label: c.name, value: c.id }))
 
   if (!isNew) {
-    const supabase = useSupabaseClient()
-    const { data } = await supabase.from('jobs').select('*').eq('id', id).single()
+    const { data } = await supabaseClient.from('jobs').select('*').eq('id', id).single()
     if (data) {
       Object.assign(form, data)
       initialDescImages.value = extractStorageImagesFromHtml(data.description || '', 'jobs')
       initialReqImages.value = extractStorageImagesFromHtml(data.requirements || '', 'jobs')
+
+      if (data.alumni_posted && data.posted_by) {
+        const { data: profile } = await supabaseClient
+          .from('alumni_profiles')
+          .select('full_name, batch_year')
+          .eq('id', data.posted_by)
+          .single()
+        submitter.value = profile
+      }
     }
   }
 })
+
+async function approveSubmission() {
+  saving.value = true
+  const result = await saveJob({ id: Number(id), status: 'published' })
+  if (result.success) {
+    form.status = 'published'
+    toast.add({ severity: 'success', summary: 'Job approved and published!', life: 2000 })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Failed to approve', detail: result.error, life: 3000 })
+  }
+  saving.value = false
+}
+
+async function rejectSubmission() {
+  saving.value = true
+  const result = await saveJob({ id: Number(id), status: 'closed' })
+  if (result.success) {
+    form.status = 'closed'
+    toast.add({ severity: 'warn', summary: 'Submission rejected', life: 2000 })
+  }
+  else {
+    toast.add({ severity: 'error', summary: 'Failed to reject', detail: result.error, life: 3000 })
+  }
+  saving.value = false
+}
 
 async function save() {
   if (!form.title || !form.company) {
@@ -103,6 +144,39 @@ async function save() {
     <div class="flex items-center gap-3">
       <NuxtLink to="/admin/jobs" class="text-slate-500 hover:text-primary-600"><i class="pi pi-arrow-left" /></NuxtLink>
       <h1 class="text-xl font-bold text-slate-900">{{ isNew ? 'New Job' : 'Edit Job' }}</h1>
+    </div>
+
+    <!-- Pending review banner -->
+    <div v-if="form.status === 'pending_review'" class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-clock text-amber-600 text-lg" />
+        <div>
+          <p class="text-sm font-semibold text-amber-800">Alumni Submission — Pending Review</p>
+          <p v-if="submitter" class="text-xs text-amber-600 mt-0.5">
+            Submitted by {{ submitter.full_name }}
+            <span v-if="submitter.batch_year"> · Batch {{ submitter.batch_year }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <Button
+          label="Approve & Publish"
+          icon="pi pi-check"
+          severity="success"
+          size="small"
+          :loading="saving"
+          @click="approveSubmission"
+        />
+        <Button
+          label="Reject"
+          icon="pi pi-times"
+          severity="danger"
+          size="small"
+          outlined
+          :loading="saving"
+          @click="rejectSubmission"
+        />
+      </div>
     </div>
 
     <form class="space-y-4" @submit.prevent="save">
@@ -208,6 +282,15 @@ async function save() {
             :path="isNew ? 'new' : id"
             aspect-ratio="3/1"
             placeholder="Optional cover image for the job listing"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Additional Photos</label>
+          <p class="text-xs text-slate-400 mb-2">Up to 8 photos displayed in the job detail gallery</p>
+          <SharedMultiPhotoUpload
+            v-model="form.additional_photos"
+            bucket="jobs"
+            :path="isNew ? 'new' : id"
           />
         </div>
         <div class="grid grid-cols-2 gap-4">

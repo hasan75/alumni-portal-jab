@@ -12,12 +12,14 @@ const stats = ref({
   publishedArticles: 0,
   openJobs: 0,
   recentPosts: 0,
+  pendingJobs: 0,
 })
 
 const recentPendingMembers = ref<any[]>([])
+const recentPendingJobs = ref<any[]>([])
 
 onMounted(async () => {
-  const [pending, active, events, articles, jobs, posts, recentPending] = await Promise.all([
+  const [pending, active, events, articles, jobs, posts, recentPending, pendingJobs, recentPendingJobsData] = await Promise.all([
     supabase.from('alumni_profiles').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('alumni_profiles').select('id', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'published').gte('start_datetime', new Date().toISOString()),
@@ -25,6 +27,8 @@ onMounted(async () => {
     supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('feed_posts').select('id', { count: 'exact', head: true }).eq('status', 'published').gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('alumni_profiles').select('id, full_name, email, batch_year, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
+    supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'pending_review'),
+    supabase.from('jobs').select('id, title, company, company_logo_url, job_type, created_at').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
   ])
 
   stats.value = {
@@ -34,9 +38,11 @@ onMounted(async () => {
     publishedArticles: articles.count || 0,
     openJobs: jobs.count || 0,
     recentPosts: posts.count || 0,
+    pendingJobs: pendingJobs.count || 0,
   }
 
   recentPendingMembers.value = recentPending.data || []
+  recentPendingJobs.value = recentPendingJobsData.data || []
 })
 
 const statCards = computed(() => [
@@ -45,6 +51,7 @@ const statCards = computed(() => [
   { label: 'Upcoming Events', value: stats.value.upcomingEvents, icon: 'pi pi-calendar', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', to: '/admin/events' },
   { label: 'Published Articles', value: stats.value.publishedArticles, icon: 'pi pi-megaphone', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', to: '/admin/news' },
   { label: 'Open Jobs', value: stats.value.openJobs, icon: 'pi pi-briefcase', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', to: '/admin/jobs' },
+  { label: 'Job Submissions', value: stats.value.pendingJobs, icon: 'pi pi-clock', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', to: '/admin/jobs?status=pending_review', urgent: stats.value.pendingJobs > 0 },
   { label: 'Posts This Week', value: stats.value.recentPosts, icon: 'pi pi-comments', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', to: '/admin/feed' },
 ])
 </script>
@@ -59,7 +66,7 @@ const statCards = computed(() => [
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
       <NuxtLink
         v-for="(card, i) in statCards"
         :key="card.label"
@@ -101,6 +108,45 @@ const statCards = computed(() => [
           <NuxtLink
             :to="`/admin/members/${member.id}`"
             class="text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors px-3 py-1 rounded-lg hover:bg-primary-50"
+          >
+            Review →
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Job Submissions -->
+    <div v-if="recentPendingJobs.length > 0" class="bg-white border border-amber-200 rounded-xl p-6 animate-fade-in-up delay-4">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="font-semibold text-slate-900 flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-50">
+            <i class="pi pi-briefcase text-amber-600 text-sm" />
+          </div>
+          Job Submissions
+        </h2>
+        <NuxtLink to="/admin/jobs?status=pending_review" class="text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors inline-flex items-center gap-1">
+          View all <i class="pi pi-arrow-right text-[10px]" />
+        </NuxtLink>
+      </div>
+      <div class="space-y-0">
+        <div
+          v-for="job in recentPendingJobs"
+          :key="job.id"
+          class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-slate-100 border border-slate-200">
+              <img v-if="job.company_logo_url" :src="job.company_logo_url" :alt="job.company" class="w-full h-full object-contain" />
+              <i v-else class="pi pi-briefcase text-slate-400 text-xs" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-slate-900 truncate">{{ job.title }}</p>
+              <p class="text-xs text-slate-500">{{ job.company }} · {{ job.job_type?.replace('_', ' ') }}</p>
+            </div>
+          </div>
+          <NuxtLink
+            :to="`/admin/jobs/${job.id}`"
+            class="text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors px-3 py-1 rounded-lg hover:bg-primary-50 shrink-0"
           >
             Review →
           </NuxtLink>

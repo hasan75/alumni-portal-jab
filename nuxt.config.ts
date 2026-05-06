@@ -79,6 +79,9 @@ export default defineNuxtConfig({
       include: '*',
       exclude: ['Chart', 'Editor'],
     },
+    directives: {
+      include: ['Tooltip'],
+    },
   },
 
   image: {

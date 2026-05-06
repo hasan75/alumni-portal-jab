@@ -6,17 +6,12 @@ const props = defineProps<{
   compact?: boolean
 }>()
 
-const workSubtitle = computed(() => {
-  return props.member.featured_work_summary || null
-})
+const workSubtitle = computed(() => props.member.featured_work_summary || null)
+const eduSubtitle = computed(() => props.member.featured_education_summary || null)
 
-const eduSubtitle = computed(() => {
-  return props.member.featured_education_summary || null
-})
-
-const hasSocialLinks = computed(() => {
+const hasContactOrSocial = computed(() => {
   const m = props.member
-  return m.linkedin_url || m.facebook_url || m.portfolio_url
+  return m.linkedin_url || m.facebook_url || m.portfolio_url || m.email || m.phone
 })
 </script>
 
@@ -28,7 +23,7 @@ const hasSocialLinks = computed(() => {
     <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
     <!-- Content -->
-    <div class="relative px-5 pt-5 pb-5 text-center">
+    <div class="relative px-4 pt-5 pb-4 text-center">
       <!-- Avatar -->
       <div class="mb-3 flex justify-center">
         <div class="relative">
@@ -48,22 +43,33 @@ const hasSocialLinks = computed(() => {
       </div>
 
       <!-- Name -->
-      <h3 class="font-semibold text-slate-900 text-sm truncate group-hover:text-primary-600 transition-colors">
+      <h3
+        v-tooltip.top="{ value: member.display_name || member.full_name, showDelay: 600 }"
+        class="font-semibold text-slate-900 text-sm truncate group-hover:text-primary-600 transition-colors leading-snug"
+      >
         {{ member.display_name || member.full_name }}
       </h3>
 
       <!-- Featured work -->
-      <p v-if="workSubtitle" class="text-xs text-slate-500 mt-0.5 truncate">
+      <p
+        v-if="workSubtitle"
+        v-tooltip.top="{ value: workSubtitle, showDelay: 600 }"
+        class="text-xs text-slate-500 mt-0.5 truncate leading-snug"
+      >
         {{ workSubtitle }}
       </p>
 
-      <!-- Featured education -->
-      <p v-if="eduSubtitle" class="text-xs text-slate-400 mt-0.5 truncate flex items-center justify-center gap-1">
-        <i class="pi pi-graduation-cap text-[9px]" />
-        {{ eduSubtitle }}
-      </p>
+      <!-- Featured education — icon outside the truncated span so it never gets clipped -->
+      <div
+        v-if="eduSubtitle"
+        v-tooltip.top="{ value: eduSubtitle, showDelay: 600 }"
+        class="flex items-center justify-center gap-1 mt-0.5 overflow-hidden"
+      >
+        <i class="pi pi-graduation-cap text-[9px] text-slate-400 shrink-0" />
+        <span class="text-xs text-slate-400 truncate min-w-0 leading-snug">{{ eduSubtitle }}</span>
+      </div>
 
-      <!-- Badges -->
+      <!-- Batch + location badges -->
       <div class="flex items-center justify-center gap-1.5 mt-3 flex-wrap">
         <span
           v-if="member.batch_year"
@@ -73,44 +79,72 @@ const hasSocialLinks = computed(() => {
         </span>
         <span
           v-if="member.city || member.country"
-          class="inline-flex items-center gap-0.5 text-[11px] text-slate-400"
+          v-tooltip.top="{ value: [member.city, member.country].filter(Boolean).join(', '), showDelay: 600 }"
+          class="inline-flex items-center gap-0.5 text-[11px] text-slate-400 truncate max-w-[120px]"
         >
-          <i class="pi pi-map-marker text-[9px]" />
-          {{ [member.city, member.country].filter(Boolean).join(', ') }}
+          <i class="pi pi-map-marker text-[9px] shrink-0" />
+          <span class="truncate">{{ [member.city, member.country].filter(Boolean).join(', ') }}</span>
         </span>
       </div>
 
-      <!-- Social links -->
-      <div v-if="hasSocialLinks" class="flex items-center justify-center gap-2 mt-3">
+      <!-- Contact & social icons -->
+      <div v-if="hasContactOrSocial" class="flex items-center justify-center gap-2 mt-3 flex-wrap">
+        <!-- Email -->
+        <a
+          v-if="member.email"
+          :href="`mailto:${member.email}`"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-all"
+          :title="member.email"
+          @click.stop
+        >
+          <i class="pi pi-envelope text-[12px]" />
+        </a>
+
+        <!-- Phone -->
+        <a
+          v-if="member.phone"
+          :href="`tel:${member.phone}`"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 transition-all"
+          :title="member.phone"
+          @click.stop
+        >
+          <i class="pi pi-phone text-[12px]" />
+        </a>
+
+        <!-- Portfolio / GitHub -->
         <a
           v-if="member.portfolio_url"
           :href="safeUrl(member.portfolio_url)"
           target="_blank"
-          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
           title="Portfolio"
           @click.stop
         >
-          <i class="pi pi-globe text-[11px]" />
+          <i class="pi pi-globe text-[12px]" />
         </a>
+
+        <!-- LinkedIn -->
         <a
           v-if="member.linkedin_url"
           :href="safeUrl(member.linkedin_url)"
           target="_blank"
-          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#0A66C2] hover:bg-blue-50 transition-all"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#0A66C2] hover:bg-blue-50 transition-all"
           title="LinkedIn"
           @click.stop
         >
-          <i class="pi pi-linkedin text-[11px]" />
+          <i class="pi pi-linkedin text-[12px]" />
         </a>
+
+        <!-- Facebook -->
         <a
           v-if="member.facebook_url"
           :href="safeUrl(member.facebook_url)"
           target="_blank"
-          class="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[#1877F2] hover:bg-blue-50 transition-all"
+          class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#1877F2] hover:bg-blue-50 transition-all"
           title="Facebook"
           @click.stop
         >
-          <i class="pi pi-facebook text-[11px]" />
+          <i class="pi pi-facebook text-[12px]" />
         </a>
       </div>
     </div>

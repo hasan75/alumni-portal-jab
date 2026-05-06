@@ -1,5 +1,5 @@
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'freelance'
-export type JobStatus = 'draft' | 'published' | 'closed' | 'archived'
+export type JobStatus = 'draft' | 'published' | 'closed' | 'archived' | 'pending_review'
 
 export interface JobCategory {
   id: number
@@ -35,6 +35,7 @@ export interface Job {
   status: JobStatus
   is_featured: boolean
   view_count: number
+  additional_photos: string[]
   posted_by: string | null
   alumni_posted: boolean
   created_at: string

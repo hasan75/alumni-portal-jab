@@ -95,9 +95,10 @@ export function useJobs() {
       .from('jobs')
       .select('*, category:job_categories(*)')
       .eq('slug', slug)
-      .single()
+      .maybeSingle()
 
-    if (fetchError) return null
+    if (fetchError) throw fetchError
+    if (!data) return null
 
     // Increment view count
     await supabase
@@ -143,6 +144,61 @@ export function useJobs() {
     return { success: !deleteError, error: deleteError?.message }
   }
 
+  async function submitJob(job: Omit<Partial<Job>, 'status' | 'alumni_posted' | 'posted_by'>) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { data, error: insertError } = await supabase
+      .from('jobs')
+      .insert({
+        ...job,
+        status: 'pending_review',
+        alumni_posted: true,
+        posted_by: user.id,
+      })
+      .select()
+      .single()
+
+    return { success: !insertError, data, error: insertError?.message }
+  }
+
+  async function fetchMySubmissions(): Promise<Job[]> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const { data, error: fetchError } = await supabase
+      .from('jobs')
+      .select('*, category:job_categories(*)')
+      .eq('posted_by', user.id)
+      .order('created_at', { ascending: false })
+
+    if (fetchError) return []
+    return (data as Job[]) || []
+  }
+
+  async function withdrawSubmission(id: number) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { error: deleteError } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', id)
+      .eq('posted_by', user.id)
+      .eq('status', 'pending_review')
+
+    return { success: !deleteError, error: deleteError?.message }
+  }
+
+  async function fetchPendingReviewCount(): Promise<number> {
+    const { count } = await supabase
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending_review')
+
+    return count || 0
+  }
+
   return {
     jobs,
     totalCount,
@@ -154,5 +210,9 @@ export function useJobs() {
     fetchCategories,
     saveJob,
     deleteJob,
+    submitJob,
+    fetchMySubmissions,
+    withdrawSubmission,
+    fetchPendingReviewCount,
   }
 }

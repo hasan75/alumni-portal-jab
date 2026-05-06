@@ -5,9 +5,59 @@ export interface MemberFilters {
   batchYear?: number
   department?: string
   status?: string
+  industry?: string
+  currentStatus?: string
+  institution?: string
+  fieldOfStudy?: string
+  city?: string
   page?: number
   perPage?: number
 }
+
+export const INDUSTRY_OPTIONS = [
+  'Technology / Software',
+  'Healthcare / Medicine',
+  'Engineering',
+  'Architecture',
+  'Finance / Banking',
+  'Education / Academia',
+  'Business / Entrepreneurship',
+  'Government / Public Service',
+  'Law / Legal',
+  'Media / Journalism',
+  'Creative Arts / Design',
+  'Agriculture',
+  'Other',
+]
+
+export const FIELD_OF_STUDY_OPTIONS = [
+  'Computer Science & Engineering (CSE)',
+  'Electrical & Electronic Engineering (EEE)',
+  'Civil Engineering',
+  'Mechanical Engineering',
+  'Architecture',
+  'Medicine (MBBS)',
+  'Pharmacy',
+  'Business Administration (BBA/MBA)',
+  'Economics',
+  'Law',
+  'English Language & Literature',
+  'Physics',
+  'Chemistry',
+  'Mathematics',
+  'Biology',
+  'Accounting',
+  'Finance',
+  'Other',
+]
+
+export const CURRENT_STATUS_OPTIONS = [
+  { label: 'Studying', value: 'studying' },
+  { label: 'Working', value: 'working' },
+  { label: 'Business / Self-Employed', value: 'business' },
+  { label: 'Studying & Working', value: 'studying_and_working' },
+  { label: 'Other', value: 'other' },
+]
 
 export function useMembers() {
   const supabase = useSupabaseClient()
@@ -28,14 +78,30 @@ export function useMembers() {
 
     let query = supabase
       .from('alumni_directory_view')
-      .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, linkedin_url, facebook_url, portfolio_url, city, country, is_verified', { count: 'exact' })
+      .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, current_job_title, current_industry, current_institution, current_field_of_study, all_institutions, all_companies, linkedin_url, facebook_url, portfolio_url, city, country, is_verified, email, phone', { count: 'exact' })
 
     if (filters.search) {
       const term = sanitizeSearchTerm(filters.search)
-      query = query.or(`full_name.ilike.%${term}%,display_name.ilike.%${term}%,featured_work_summary.ilike.%${term}%`)
+      // Search across name, current job, AND full history of institutions + companies
+      query = query.or(`full_name.ilike.%${term}%,display_name.ilike.%${term}%,featured_work_summary.ilike.%${term}%,current_job_title.ilike.%${term}%,all_institutions.ilike.%${term}%,all_companies.ilike.%${term}%`)
     }
     if (filters.batchYear) query = query.eq('batch_year', filters.batchYear)
     if (filters.department) query = query.eq('department', filters.department)
+    if (filters.industry) query = query.eq('current_industry', filters.industry)
+    if (filters.currentStatus) query = query.eq('current_status', filters.currentStatus)
+    if (filters.institution) {
+      // Match against full history, not just current institution
+      const term = sanitizeSearchTerm(filters.institution)
+      query = query.ilike('all_institutions', `%${term}%`)
+    }
+    if (filters.fieldOfStudy) {
+      const term = sanitizeSearchTerm(filters.fieldOfStudy)
+      query = query.ilike('current_field_of_study', `%${term}%`)
+    }
+    if (filters.city) {
+      const term = sanitizeSearchTerm(filters.city)
+      query = query.ilike('city', `%${term}%`)
+    }
 
     query = query.order('full_name').range(from, to)
 
@@ -340,7 +406,12 @@ export function useMembers() {
   async function recalcFeaturedEducation(alumniId: string) {
     const records = await fetchEducation(alumniId)
     if (records.length === 0) {
-      await supabase.from('alumni_profiles').update({ featured_education_summary: null }).eq('id', alumniId)
+      await supabase.from('alumni_profiles').update({
+        featured_education_summary: null,
+        current_institution: null,
+        current_field_of_study: null,
+        all_institutions: null,
+      }).eq('id', alumniId)
       return
     }
 
@@ -352,13 +423,24 @@ export function useMembers() {
     }
 
     const summary = buildEduSummary(featured)
-    await supabase.from('alumni_profiles').update({ featured_education_summary: summary }).eq('id', alumniId)
+    const allInstitutions = records.map(r => r.institution).join(' | ')
+    await supabase.from('alumni_profiles').update({
+      featured_education_summary: summary,
+      current_institution: featured.institution,
+      current_field_of_study: featured.field_of_study || null,
+      all_institutions: allInstitutions,
+    }).eq('id', alumniId)
   }
 
   async function recalcFeaturedWork(alumniId: string) {
     const records = await fetchWorkExperience(alumniId)
     if (records.length === 0) {
-      await supabase.from('alumni_profiles').update({ featured_work_summary: null }).eq('id', alumniId)
+      await supabase.from('alumni_profiles').update({
+        featured_work_summary: null,
+        current_job_title: null,
+        current_industry: null,
+        all_companies: null,
+      }).eq('id', alumniId)
       return
     }
 
@@ -370,7 +452,13 @@ export function useMembers() {
     }
 
     const summary = buildWorkSummary(featured)
-    await supabase.from('alumni_profiles').update({ featured_work_summary: summary }).eq('id', alumniId)
+    const allCompanies = records.map(r => r.company).join(' | ')
+    await supabase.from('alumni_profiles').update({
+      featured_work_summary: summary,
+      current_job_title: featured.job_title,
+      current_industry: featured.industry || null,
+      all_companies: allCompanies,
+    }).eq('id', alumniId)
   }
 
   async function setFeaturedEducation(alumniId: string, eduId: number) {
@@ -397,6 +485,20 @@ export function useMembers() {
     await supabase.from('alumni_work_experience').update({ is_featured: false }).eq('alumni_id', alumniId)
     await recalcFeaturedWork(alumniId)
     return { success: true }
+  }
+
+  async function fetchDistinctIndustries(): Promise<string[]> {
+    const { data } = await supabase
+      .from('alumni_directory_view')
+      .select('current_industry')
+      .not('current_industry', 'is', null)
+      .order('current_industry')
+
+    const seen = new Set<string>()
+    for (const row of (data || [])) {
+      if (row.current_industry) seen.add(row.current_industry)
+    }
+    return [...seen]
   }
 
   async function syncSocialUrls(alumniId: string) {
@@ -448,5 +550,6 @@ export function useMembers() {
     syncSocialUrls,
     recalcFeaturedEducation,
     recalcFeaturedWork,
+    fetchDistinctIndustries,
   }
 }

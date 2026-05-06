@@ -34,9 +34,14 @@ defineProps<{
             <h3 class="font-semibold text-slate-900 leading-snug group-hover:text-primary-600 transition-colors">{{ job.title }}</h3>
             <p class="text-sm text-slate-500 mt-0.5">{{ job.company }}</p>
           </div>
-          <span v-if="job.is_featured" class="shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-            Featured
-          </span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span v-if="job.is_featured" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+              Featured
+            </span>
+            <span v-if="job.alumni_posted" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+              Alumni
+            </span>
+          </div>
         </div>
 
         <div class="flex flex-wrap gap-2 mt-3">
