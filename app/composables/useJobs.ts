@@ -95,9 +95,10 @@ export function useJobs() {
       .from('jobs')
       .select('*, category:job_categories(*)')
       .eq('slug', slug)
-      .single()
+      .maybeSingle()
 
-    if (fetchError) return null
+    if (fetchError) throw fetchError
+    if (!data) return null
 
     // Increment view count
     await supabase

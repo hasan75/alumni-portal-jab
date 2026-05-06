@@ -70,7 +70,7 @@ const form = reactive({
   bio: '',
   batch_year: null as number | null,
   department: '',
-  degree: '',
+  degree: 'SSC (Secondary School Certificate)',
   graduation_year: null as number | null,
   city: '',
   country: '',
@@ -91,10 +91,10 @@ watch(() => authStore.profile, (profile) => {
       bio: profile.bio || '',
       batch_year: profile.batch_year,
       department: profile.department || '',
-      degree: profile.degree || '',
+      degree: 'SSC (Secondary School Certificate)',
       graduation_year: profile.graduation_year,
       city: profile.city || '',
-      country: profile.country || '',
+      country: profile.country || 'Bangladesh',
       phone: profile.phone || '',
       avatar_url: profile.avatar_url || null,
       cover_photo_url: profile.cover_photo_url || null,
@@ -446,11 +446,16 @@ async function saveSocialUrl(platformSlug: string) {
           </div>
           <div>
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Department</label>
-            <InputText v-model="form.department" class="w-full" placeholder="e.g. Computer Science" />
+            <Select
+              v-model="form.department"
+              :options="['Science', 'Arts', 'Commerce']"
+              placeholder="Select department"
+              class="w-full"
+            />
           </div>
           <div>
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Degree</label>
-            <InputText v-model="form.degree" class="w-full" placeholder="e.g. BSc, MSc" />
+            <InputText v-model="form.degree" class="w-full opacity-60 cursor-not-allowed" disabled />
           </div>
         </div>
       </div>

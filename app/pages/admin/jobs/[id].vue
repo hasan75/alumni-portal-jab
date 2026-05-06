@@ -49,6 +49,7 @@ const form = reactive({
   status: 'draft',
   is_featured: false,
   alumni_posted: false,
+  additional_photos: [] as string[],
 })
 
 const jobTypes = ['full_time', 'part_time', 'contract', 'internship', 'freelance'].map(t => ({
@@ -281,6 +282,15 @@ async function save() {
             :path="isNew ? 'new' : id"
             aspect-ratio="3/1"
             placeholder="Optional cover image for the job listing"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Additional Photos</label>
+          <p class="text-xs text-slate-400 mb-2">Up to 8 photos displayed in the job detail gallery</p>
+          <SharedMultiPhotoUpload
+            v-model="form.additional_photos"
+            bucket="jobs"
+            :path="isNew ? 'new' : id"
           />
         </div>
         <div class="grid grid-cols-2 gap-4">

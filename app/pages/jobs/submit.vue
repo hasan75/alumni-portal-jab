@@ -37,6 +37,7 @@ const form = reactive({
   apply_url: '' as string | null,
   apply_email: '' as string | null,
   application_deadline: null as Date | null,
+  additional_photos: [] as string[],
 })
 
 // Track images embedded in the RTEs for orphan cleanup after submit
@@ -62,6 +63,7 @@ function resetForm() {
   form.apply_url = ''
   form.apply_email = ''
   form.application_deadline = null
+  form.additional_photos = []
   initialDescImages.value = []
   initialReqImages.value = []
 }
@@ -139,6 +141,7 @@ async function handleSubmit() {
     apply_url: form.apply_url?.trim() || null,
     apply_email: form.apply_email?.trim() || null,
     application_deadline: deadlineStr,
+    additional_photos: form.additional_photos,
   }
 
   const result = await submitJob(payload)
@@ -331,6 +334,29 @@ function formatDate(iso: string): string {
             path="new"
             aspect-ratio="3/1"
             placeholder="Click or drag to upload a cover image"
+          />
+        </div>
+      </div>
+
+      <!-- Additional Photos -->
+      <div class="glass-light relative overflow-hidden p-6 space-y-5 animate-fade-in-up delay-2">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+
+        <div class="relative flex items-center gap-3 pb-1 border-b border-slate-200/60">
+          <div class="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+            <i class="pi pi-images text-primary-600 text-sm" />
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-900">Additional Photos</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Up to 8 photos shown in the job detail gallery (optional)</p>
+          </div>
+        </div>
+
+        <div class="relative">
+          <SharedMultiPhotoUpload
+            v-model="form.additional_photos"
+            bucket="jobs"
+            path="new"
           />
         </div>
       </div>

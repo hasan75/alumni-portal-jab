@@ -35,6 +35,7 @@ export interface Job {
   status: JobStatus
   is_featured: boolean
   view_count: number
+  additional_photos: string[]
   posted_by: string | null
   alumni_posted: boolean
   created_at: string
