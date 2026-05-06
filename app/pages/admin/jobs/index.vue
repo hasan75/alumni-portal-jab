@@ -9,7 +9,7 @@ import Tag from 'primevue/tag'
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 useSeoMeta({ title: 'Jobs | Admin', robots: 'noindex' })
 
-const { fetchAllForAdmin, deleteJob, totalCount } = useJobs()
+const { fetchAllForAdmin, deleteJob, totalCount, fetchPendingReviewCount } = useJobs()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -19,14 +19,46 @@ const search = ref('')
 const currentPage = ref(1)
 const pageSize = ref(25)
 const pageSizeOptions = [{ label: '10', value: 10 }, { label: '20', value: 20 }, { label: '25', value: 25 }, { label: '30', value: 30 }]
+const activeTab = ref<string | null>(null)
+const pendingCount = ref(0)
+
+const tabs = computed(() => [
+  { label: 'All', value: null },
+  { label: 'Published', value: 'published' },
+  { label: 'Draft', value: 'draft' },
+  {
+    label: pendingCount.value > 0 ? `Pending Review (${pendingCount.value})` : 'Pending Review',
+    value: 'pending_review',
+    highlight: pendingCount.value > 0,
+  },
+  { label: 'Closed', value: 'closed' },
+  { label: 'Archived', value: 'archived' },
+])
 
 async function load() {
   loading.value = true
-  jobs.value = await fetchAllForAdmin({ search: search.value || undefined, page: currentPage.value, perPage: pageSize.value })
+  jobs.value = await fetchAllForAdmin({
+    search: search.value || undefined,
+    status: activeTab.value || undefined,
+    page: currentPage.value,
+    perPage: pageSize.value,
+  })
   loading.value = false
 }
 
-onMounted(load)
+async function loadCounts() {
+  pendingCount.value = await fetchPendingReviewCount()
+}
+
+onMounted(async () => {
+  await Promise.all([load(), loadCounts()])
+})
+
+function switchTab(value: string | null) {
+  activeTab.value = value
+  currentPage.value = 1
+  load()
+}
 
 const debounce = ref<ReturnType<typeof setTimeout>>()
 function onSearch() {
@@ -47,13 +79,23 @@ function handleDelete(id: number, title: string) {
       const result = await deleteJob(id)
       if (result.success) {
         toast.add({ severity: 'success', summary: 'Job deleted', life: 2000 })
-        await load()
+        await Promise.all([load(), loadCounts()])
       }
     },
   })
 }
 
-const statusSeverity: Record<string, string> = { published: 'success', draft: 'secondary', closed: 'danger', archived: 'warn' }
+const statusSeverity: Record<string, string> = {
+  published: 'success',
+  draft: 'secondary',
+  closed: 'danger',
+  archived: 'warn',
+  pending_review: 'warn',
+}
+
+const statusLabel: Record<string, string> = {
+  pending_review: 'Pending Review',
+}
 </script>
 
 <template>
@@ -65,6 +107,25 @@ const statusSeverity: Record<string, string> = { published: 'success', draft: 's
       </NuxtLink>
     </div>
 
+    <!-- Tabs -->
+    <div class="flex flex-wrap gap-1 border-b border-slate-200 pb-0">
+      <button
+        v-for="tab in tabs"
+        :key="String(tab.value)"
+        class="px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative"
+        :class="activeTab === tab.value
+          ? 'text-primary-600 border-b-2 border-primary-600 -mb-px bg-white'
+          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'"
+        @click="switchTab(tab.value)"
+      >
+        {{ tab.label }}
+        <span
+          v-if="tab.highlight"
+          class="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full"
+        />
+      </button>
+    </div>
+
     <InputText v-model="search" placeholder="Search jobs..." class="max-w-sm" @input="onSearch" />
 
     <div v-if="!loading && jobs.length === 0" class="bg-white border border-slate-200 rounded-xl text-center py-16 px-8">
@@ -72,7 +133,9 @@ const statusSeverity: Record<string, string> = { published: 'success', draft: 's
         <i class="pi pi-briefcase text-2xl text-slate-300" />
       </div>
       <h3 class="text-lg font-semibold text-slate-800 mb-1">No jobs found</h3>
-      <p class="text-sm text-slate-500">{{ search ? 'Try a different search term.' : 'Post your first job to get started.' }}</p>
+      <p class="text-sm text-slate-500">
+        {{ activeTab === 'pending_review' ? 'No submissions awaiting review.' : search ? 'Try a different search term.' : 'Post your first job to get started.' }}
+      </p>
     </div>
 
     <template v-else>
@@ -83,13 +146,19 @@ const statusSeverity: Record<string, string> = { published: 'success', draft: 's
               <NuxtLink :to="`/admin/jobs/${data.id}`" class="font-medium text-slate-900 hover:text-primary-600">
                 {{ data.title }}
               </NuxtLink>
+              <span v-if="data.alumni_posted" class="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                Alumni
+              </span>
             </template>
           </Column>
           <Column field="company" header="Company" />
           <Column field="job_type" header="Type" />
           <Column field="status" header="Status">
             <template #body="{ data }">
-              <Tag :value="data.status" :severity="statusSeverity[data.status] || 'secondary'" />
+              <Tag
+                :value="statusLabel[data.status] || data.status"
+                :severity="statusSeverity[data.status] || 'secondary'"
+              />
             </template>
           </Column>
           <Column field="view_count" header="Views" />

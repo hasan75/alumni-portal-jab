@@ -1,5 +1,5 @@
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'freelance'
-export type JobStatus = 'draft' | 'published' | 'closed' | 'archived'
+export type JobStatus = 'draft' | 'published' | 'closed' | 'archived' | 'pending_review'
 
 export interface JobCategory {
   id: number
