@@ -196,7 +196,8 @@ function clearAllFilters() {
               <InputText
                 v-model="institutionSearch"
                 placeholder="e.g. BUET, Dhaka University…"
-                class="w-full pl-8"
+                class="w-full"
+                style="padding-left: 2.25rem"
                 @input="onTextFilter"
               />
             </div>
@@ -210,7 +211,8 @@ function clearAllFilters() {
               <InputText
                 v-model="fieldOfStudySearch"
                 placeholder="e.g. CSE, Medicine, Architecture…"
-                class="w-full pl-8"
+                class="w-full"
+                style="padding-left: 2.25rem"
                 @input="onTextFilter"
               />
             </div>
@@ -224,7 +226,8 @@ function clearAllFilters() {
               <InputText
                 v-model="citySearch"
                 placeholder="e.g. Dhaka, Chittagong…"
-                class="w-full pl-8"
+                class="w-full"
+                style="padding-left: 2.25rem"
                 @input="onTextFilter"
               />
             </div>

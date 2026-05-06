@@ -78,7 +78,7 @@ export function useMembers() {
 
     let query = supabase
       .from('alumni_directory_view')
-      .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, current_job_title, current_industry, current_institution, current_field_of_study, all_institutions, all_companies, linkedin_url, facebook_url, portfolio_url, city, country, is_verified', { count: 'exact' })
+      .select('id, full_name, display_name, avatar_url, batch_year, current_status, featured_education_summary, featured_work_summary, current_job_title, current_industry, current_institution, current_field_of_study, all_institutions, all_companies, linkedin_url, facebook_url, portfolio_url, city, country, is_verified, email, phone', { count: 'exact' })
 
     if (filters.search) {
       const term = sanitizeSearchTerm(filters.search)
