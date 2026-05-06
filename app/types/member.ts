@@ -20,6 +20,12 @@ export interface AlumniProfile {
   current_status: CurrentStatus | null
   featured_education_summary: string | null
   featured_work_summary: string | null
+  current_job_title: string | null
+  current_industry: string | null
+  current_institution: string | null
+  current_field_of_study: string | null
+  all_institutions: string | null
+  all_companies: string | null
   linkedin_url: string | null
   facebook_url: string | null
   portfolio_url: string | null

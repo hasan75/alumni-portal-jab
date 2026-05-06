@@ -5,8 +5,10 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Password from 'primevue/password'
 import ToggleSwitch from 'primevue/toggleswitch'
+import AutoComplete from 'primevue/autocomplete'
 import { useAuthStore } from '~/stores/auth'
 import type { AlumniEducation, AlumniWorkExperience } from '~/types/member'
+import { INDUSTRY_OPTIONS, FIELD_OF_STUDY_OPTIONS } from '~/composables/useMembers'
 
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 useSeoMeta({ title: 'My Profile | JAB Alumni', robots: 'noindex' })
@@ -44,6 +46,23 @@ const workForm = reactive({
   is_current: false,
   url: '',
 })
+
+// AutoComplete suggestions for industry and field of study
+const industrySuggestions = ref<string[]>([])
+function filterIndustries(event: { query: string }) {
+  const q = event.query.toLowerCase()
+  industrySuggestions.value = q
+    ? INDUSTRY_OPTIONS.filter(o => o.toLowerCase().includes(q))
+    : [...INDUSTRY_OPTIONS]
+}
+
+const fieldOfStudySuggestions = ref<string[]>([])
+function filterFieldsOfStudy(event: { query: string }) {
+  const q = event.query.toLowerCase()
+  fieldOfStudySuggestions.value = q
+    ? FIELD_OF_STUDY_OPTIONS.filter(o => o.toLowerCase().includes(q))
+    : [...FIELD_OF_STUDY_OPTIONS]
+}
 
 // Social links state
 const socialPlatforms = ref<any[]>([])
@@ -488,7 +507,16 @@ async function saveSocialUrl(platformSlug: string) {
             </div>
             <div>
               <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-1.5">Field of Study</label>
-              <InputText v-model="eduForm.field_of_study" class="w-full" placeholder="e.g. Computer Science" />
+              <AutoComplete
+                v-model="eduForm.field_of_study"
+                :suggestions="fieldOfStudySuggestions"
+                class="w-full"
+                input-class="w-full"
+                placeholder="e.g. Computer Science & Engineering (CSE)"
+                dropdown
+                @complete="filterFieldsOfStudy"
+              />
+              <p class="text-xs text-slate-400 mt-1">Helps alumni find you by subject area</p>
             </div>
             <div>
               <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-1.5">Start Year</label>
@@ -568,7 +596,16 @@ async function saveSocialUrl(platformSlug: string) {
             </div>
             <div>
               <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-1.5">Industry</label>
-              <InputText v-model="workForm.industry" class="w-full" placeholder="e.g. Technology" />
+              <AutoComplete
+                v-model="workForm.industry"
+                :suggestions="industrySuggestions"
+                class="w-full"
+                input-class="w-full"
+                placeholder="e.g. Technology / Software"
+                dropdown
+                @complete="filterIndustries"
+              />
+              <p class="text-xs text-slate-400 mt-1">Helps alumni find you by profession</p>
             </div>
             <div>
               <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-1.5">Start Date</label>
