@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import InputNumber from 'primevue/inputnumber'
 import DatePicker from 'primevue/datepicker'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Button from 'primevue/button'
 import type { JobType } from '~/types/job'
+import { extractStorageImagesFromHtml, deleteOrphanedImages } from '~/utils/htmlContent'
 
 definePageMeta({ layout: 'member', middleware: 'member-auth' })
 useSeoMeta({ title: 'Post a Job | JAB Alumni' })
@@ -21,6 +21,8 @@ const submitting = ref(false)
 const form = reactive({
   title: '',
   company: '',
+  company_logo_url: null as string | null,
+  cover_image_url: null as string | null,
   company_website: '' as string | null,
   category_id: null as number | null,
   description: '',
@@ -37,9 +39,15 @@ const form = reactive({
   application_deadline: null as Date | null,
 })
 
+// Track images embedded in the RTEs for orphan cleanup after submit
+const initialDescImages = ref<string[]>([])
+const initialReqImages = ref<string[]>([])
+
 function resetForm() {
   form.title = ''
   form.company = ''
+  form.company_logo_url = null
+  form.cover_image_url = null
   form.company_website = ''
   form.category_id = null
   form.description = ''
@@ -54,6 +62,8 @@ function resetForm() {
   form.apply_url = ''
   form.apply_email = ''
   form.application_deadline = null
+  initialDescImages.value = []
+  initialReqImages.value = []
 }
 
 // ── Static option lists ────────────────────────────────────────────────────────
@@ -82,6 +92,10 @@ onMounted(async () => {
 })
 
 // ── Submit handler ────────────────────────────────────────────────────────────
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, '').trim()
+}
+
 async function handleSubmit() {
   if (!form.title.trim()) {
     toast.add({ severity: 'warn', summary: 'Job title is required', life: 3000 })
@@ -95,14 +109,13 @@ async function handleSubmit() {
     toast.add({ severity: 'warn', summary: 'Please select a job type', life: 3000 })
     return
   }
-  if (!form.description.trim()) {
+  if (!stripHtml(form.description)) {
     toast.add({ severity: 'warn', summary: 'Job description is required', life: 3000 })
     return
   }
 
   submitting.value = true
 
-  // Convert Date object for deadline to ISO string
   const deadlineStr = form.application_deadline
     ? (form.application_deadline as Date).toISOString().split('T')[0]
     : null
@@ -110,10 +123,12 @@ async function handleSubmit() {
   const payload = {
     title: form.title.trim(),
     company: form.company.trim(),
+    company_logo_url: form.company_logo_url || null,
+    cover_image_url: form.cover_image_url || null,
     company_website: form.company_website?.trim() || null,
     category_id: form.category_id,
-    description: form.description.trim(),
-    requirements: form.requirements?.trim() || null,
+    description: form.description,
+    requirements: form.requirements || null,
     location: form.location?.trim() || null,
     is_remote: form.is_remote,
     job_type: form.job_type as JobType,
@@ -129,6 +144,12 @@ async function handleSubmit() {
   const result = await submitJob(payload)
 
   if (result.success) {
+    // Clean up any images that were uploaded to the RTE but removed before submit
+    const currentDescImages = extractStorageImagesFromHtml(form.description, 'jobs')
+    const currentReqImages = extractStorageImagesFromHtml(form.requirements || '', 'jobs')
+    await deleteOrphanedImages(initialDescImages.value, currentDescImages, 'jobs')
+    await deleteOrphanedImages(initialReqImages.value, currentReqImages, 'jobs')
+
     toast.add({
       severity: 'success',
       summary: 'Job submitted for review',
@@ -235,14 +256,31 @@ function formatDate(iso: string): string {
         </div>
 
         <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Job title — full width -->
           <div class="sm:col-span-2">
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Job Title <span class="text-red-500">*</span></label>
             <InputText v-model="form.title" class="w-full" placeholder="e.g. Senior Software Engineer" />
           </div>
-          <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Company <span class="text-red-500">*</span></label>
-            <InputText v-model="form.company" class="w-full" placeholder="e.g. Grameenphone" />
+
+          <!-- Company name + logo upload side by side -->
+          <div class="flex gap-3 sm:col-span-2">
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Company <span class="text-red-500">*</span></label>
+              <InputText v-model="form.company" class="w-full" placeholder="e.g. Grameenphone" />
+            </div>
+            <div class="shrink-0">
+              <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Logo</label>
+              <SharedImageUpload
+                v-model="form.company_logo_url"
+                bucket="jobs"
+                path="new"
+                aspect-ratio="1/1"
+                compact
+                placeholder="Logo"
+              />
+            </div>
           </div>
+
           <div>
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Company Website</label>
             <InputText v-model="form.company_website" class="w-full" placeholder="https://company.com" />
@@ -258,7 +296,7 @@ function formatDate(iso: string): string {
               class="w-full"
             />
           </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Category</label>
             <Select
               v-model="form.category_id"
@@ -272,8 +310,33 @@ function formatDate(iso: string): string {
         </div>
       </div>
 
-      <!-- Description & Requirements -->
+      <!-- Cover Image -->
       <div class="glass-light relative overflow-hidden p-6 space-y-5 animate-fade-in-up delay-2">
+        <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
+
+        <div class="relative flex items-center gap-3 pb-1 border-b border-slate-200/60">
+          <div class="w-8 h-8 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+            <i class="pi pi-image text-primary-600 text-sm" />
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-900">Cover Image</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Optional banner shown on the job listing</p>
+          </div>
+        </div>
+
+        <div class="relative">
+          <SharedImageUpload
+            v-model="form.cover_image_url"
+            bucket="jobs"
+            path="new"
+            aspect-ratio="3/1"
+            placeholder="Click or drag to upload a cover image"
+          />
+        </div>
+      </div>
+
+      <!-- Description & Requirements -->
+      <div class="glass-light relative overflow-hidden p-6 space-y-5 animate-fade-in-up delay-3">
         <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
         <div class="relative flex items-center gap-3 pb-1 border-b border-slate-200/60">
@@ -283,22 +346,31 @@ function formatDate(iso: string): string {
           <h2 class="font-semibold text-slate-900">Description</h2>
         </div>
 
-        <div class="relative space-y-4">
+        <div class="relative space-y-5">
           <div>
             <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Job Description <span class="text-red-500">*</span></label>
-            <Textarea
+            <SharedRichTextEditor
+              id="job-description"
               v-model="form.description"
-              :rows="6"
-              class="w-full"
+              :height="250"
+              :allow-images="false"
+              bucket="jobs"
+              storage-path="new"
               placeholder="Describe the role, responsibilities, and what the candidate will be doing day-to-day…"
             />
           </div>
           <div>
-            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">Requirements <span class="text-slate-400 normal-case font-normal">(optional)</span></label>
-            <Textarea
+            <label class="block text-xs font-semibold tracking-wide uppercase text-slate-500 mb-2">
+              Requirements
+              <span class="text-slate-400 normal-case font-normal tracking-normal ml-1">(optional)</span>
+            </label>
+            <SharedRichTextEditor
+              id="job-requirements"
               v-model="form.requirements"
-              :rows="4"
-              class="w-full"
+              :height="200"
+              :allow-images="false"
+              bucket="jobs"
+              storage-path="new"
               placeholder="List required qualifications, skills, or experience…"
             />
           </div>
@@ -332,7 +404,7 @@ function formatDate(iso: string): string {
       </div>
 
       <!-- Salary -->
-      <div class="glass-light relative overflow-hidden p-6 space-y-5 animate-fade-in-up delay-3">
+      <div class="glass-light relative overflow-hidden p-6 space-y-5 animate-fade-in-up delay-4">
         <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
         <div class="relative flex items-center justify-between pb-1 border-b border-slate-200/60">
@@ -479,11 +551,18 @@ function formatDate(iso: string): string {
         >
           <div class="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-br from-white/50 via-transparent to-transparent" />
 
+          <!-- Cover image strip -->
+          <div v-if="job.cover_image_url" class="relative -mx-4 -mt-4 sm:-mx-5 sm:-mt-5 mb-4 overflow-hidden rounded-t-[18px] h-24">
+            <img :src="job.cover_image_url" alt="" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
+          </div>
+
           <div class="relative flex items-start justify-between gap-4">
-            <!-- Job info -->
+            <!-- Company logo + job info -->
             <div class="flex items-start gap-3 min-w-0">
-              <div class="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 mt-0.5">
-                <i class="pi pi-briefcase text-primary-600" />
+              <div class="w-9 h-9 rounded-xl shrink-0 mt-0.5 overflow-hidden flex items-center justify-center bg-primary-50 border border-slate-200">
+                <img v-if="job.company_logo_url" :src="job.company_logo_url" :alt="job.company" class="w-full h-full object-contain" />
+                <i v-else class="pi pi-briefcase text-primary-600 text-sm" />
               </div>
               <div class="min-w-0">
                 <p class="font-semibold text-slate-900 text-sm leading-snug truncate">{{ job.title }}</p>
